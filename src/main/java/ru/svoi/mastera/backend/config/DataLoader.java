@@ -15,18 +15,23 @@ public class DataLoader implements CommandLineRunner {
     @Override
     public void run(String... args) {
         if (categoryRepository.count() == 0) {
-            Category c1 = new Category();
-            c1.setName("Электрика");
-            c1.setSlug("elektrika");
-            c1.setActive(true);
-
-            Category c2 = new Category();
-            c2.setName("Сантехника");
-            c2.setSlug("santehnika");
-            c2.setActive(true);
-
-            categoryRepository.save(c1);
-            categoryRepository.save(c2);
+            addCategory("Ремонт квартир", "remont-kvartir");
+            addCategory("Сантехника", "santehnika");
+            addCategory("Электрика", "elektrika");
+            addCategory("Уборка", "uborka");
+            addCategory("Парикмахер", "parikhmaher");
+            addCategory("Маникюр и педикюр", "manikur");
+            addCategory("Красота и здоровье", "krasota-i-zdorovie");
+            addCategory("Репетиторство", "repetitorstvo");
+            addCategory("Компьютерная помощь", "kompyuternaya-pomosh");
         }
+    }
+
+    private void addCategory(String name, String slug) {
+        Category cat = new Category();
+        cat.setName(name);
+        cat.setSlug(slug);
+        cat.setActive(true);
+        categoryRepository.save(cat);
     }
 }
