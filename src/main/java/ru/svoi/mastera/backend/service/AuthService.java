@@ -37,7 +37,6 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setStatus(UserStatus.ACTIVE);
-
         user = userRepository.save(user);
 
         boolean asWorker = Boolean.TRUE.equals(request.getAsWorker());
@@ -59,12 +58,8 @@ public class AuthService {
             customerProfileRepository.save(customer);
         }
 
-        boolean hasWorker = asWorker;
-        boolean hasCustomer = asCustomer;
-
-        UserDto userDto = toUserDto(user, hasWorker, hasCustomer);
+        UserDto userDto = toUserDto(user, asWorker, asCustomer);
         String fakeToken = UUID.randomUUID().toString();
-
         return new AuthResponse(fakeToken, userDto);
     }
 
@@ -82,7 +77,6 @@ public class AuthService {
 
         UserDto userDto = toUserDto(user, hasWorker, hasCustomer);
         String fakeToken = UUID.randomUUID().toString();
-
         return new AuthResponse(fakeToken, userDto);
     }
 
@@ -93,7 +87,6 @@ public class AuthService {
 
         boolean hasWorker = user.getWorkerProfile() != null;
         boolean hasCustomer = user.getCustomerProfile() != null;
-
         return toUserDto(user, hasWorker, hasCustomer);
     }
 
@@ -109,7 +102,8 @@ public class AuthService {
                 user.getEmail(),
                 displayName,
                 hasWorker,
-                hasCustomer
+                hasCustomer,
+                user.getAvatarUrl()
         );
     }
 }

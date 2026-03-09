@@ -14,5 +14,5 @@ public class UserDto {
     private String displayName;
     private boolean hasWorkerProfile;
     private boolean hasCustomerProfile;
-
+    private String avatarUrl;
 }

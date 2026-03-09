@@ -13,7 +13,7 @@ import java.time.Instant;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User extends BaseEntity{
+public class User extends BaseEntity {
 
     @Column(nullable = false, unique = true, length = 255)
     private String email;
@@ -24,7 +24,6 @@ public class User extends BaseEntity{
     @Column(nullable = false, length = 255)
     private String passwordHash;
 
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private UserStatus status = UserStatus.PENDING_VERIFICATION;
@@ -32,10 +31,12 @@ public class User extends BaseEntity{
     @Column
     private Instant lastLoginAt;
 
+    @Column(length = 500)
+    private String avatarUrl;
+
     @OneToOne(mappedBy = "user")
     private WorkerProfile workerProfile;
 
     @OneToOne(mappedBy = "user")
     private CustomerProfile customerProfile;
-
 }
