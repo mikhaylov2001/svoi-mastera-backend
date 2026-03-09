@@ -1,10 +1,9 @@
--- Добавляем недостающие категории (если slug уже есть — пропустит)
+-- V3: Add all 9 service categories
+
 INSERT INTO categories (id, created_at, updated_at, name, slug, active)
 SELECT gen_random_uuid(), now(), now(), n, s, true
 FROM (VALUES
           ('Ремонт квартир', 'remont-kvartir'),
-          ('Сантехника', 'santehnika'),
-          ('Электрика', 'elektrika'),
           ('Уборка', 'uborka'),
           ('Парикмахер', 'parikhmaher'),
           ('Маникюр и педикюр', 'manikur'),
