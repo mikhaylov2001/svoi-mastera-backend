@@ -51,10 +51,15 @@ public class Deal extends BaseEntity {
     @Column(precision = 12, scale = 2)
     private BigDecimal payoutAmount;
 
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private DealStatus status = DealStatus.NEW;
+
+    @Column(nullable = false)
+    private boolean customerConfirmed = false;
+
+    @Column(nullable = false)
+    private boolean workerConfirmed = false;
 
     @Column
     private Instant startedAt;
@@ -73,5 +78,4 @@ public class Deal extends BaseEntity {
 
     @OneToMany(mappedBy = "deal")
     private List<Review> reviews;
-
 }

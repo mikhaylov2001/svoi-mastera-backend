@@ -17,7 +17,6 @@ public class DealController {
         this.dealService = dealService;
     }
 
-    // принять отклик и создать сделку (вызывается со стороны клиента)
     @PostMapping("/accept")
     public DealDto accept(@RequestHeader("X-User-Id") UUID customerUserId,
                           @RequestParam("jobRequestId") UUID jobRequestId,
@@ -25,22 +24,27 @@ public class DealController {
         return dealService.acceptOffer(customerUserId, jobRequestId, offerId);
     }
 
-    // список моих сделок (как клиента)
     @GetMapping
     public List<DealDto> myDeals(@RequestHeader("X-User-Id") UUID userId) {
         return dealService.listMyDeals(userId);
     }
 
-    // получить сделку по id
     @GetMapping("/{id}")
     public DealDto getById(@PathVariable UUID id) {
         return dealService.getById(id);
     }
 
+    // Подтвердить выполнение (обе стороны)
+    @PostMapping("/{id}/confirm")
+    public DealDto confirm(@RequestHeader("X-User-Id") UUID userId,
+                           @PathVariable("id") UUID dealId) {
+        return dealService.confirmDeal(userId, dealId);
+    }
+
+    // Backward compat
     @PostMapping("/{id}/complete")
     public DealDto complete(@RequestHeader("X-User-Id") UUID userId,
                             @PathVariable("id") UUID dealId) {
         return dealService.completeDeal(userId, dealId);
     }
 }
-

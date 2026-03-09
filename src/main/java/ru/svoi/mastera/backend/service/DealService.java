@@ -11,6 +11,7 @@ import ru.svoi.mastera.backend.entity.enams.JobRequestStatus;
 import ru.svoi.mastera.backend.repository.*;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,28 +41,26 @@ public class DealService {
             throw new RuntimeException("Offer does not belong to this job request");
         }
 
-        // Проверяем, что текущий пользователь — владелец заявки
         if (!jobRequest.getCustomer().getUser().getId().equals(customerUserId)) {
             throw new RuntimeException("You are not owner of this job request");
         }
 
-        // обновляем статусы
-        jobRequest.setStatus(JobRequestStatus.IN_PROGRESS); // или свой статус из enum
+        jobRequest.setStatus(JobRequestStatus.IN_PROGRESS);
         offer.setStatus(JobOfferStatus.ACCEPTED);
         jobRequest.setSelectedOffer(offer);
 
-        // создаём сделку
         Deal deal = new Deal();
         deal.setJobRequest(jobRequest);
         deal.setJobOffer(offer);
-        deal.setCustomer(jobRequest.getCustomer());   // CustomerProfile
-        deal.setWorker(offer.getWorker());           // WorkerProfile
+        deal.setCustomer(jobRequest.getCustomer());
+        deal.setWorker(offer.getWorker());
         deal.setAgreedPrice(offer.getPrice());
-        deal.setStatus(DealStatus.NEW);
+        deal.setStatus(DealStatus.IN_PROGRESS);
         deal.setStartedAt(Instant.now());
+        deal.setCustomerConfirmed(false);
+        deal.setWorkerConfirmed(false);
 
         deal = dealRepository.save(deal);
-
         return toDto(deal);
     }
 
@@ -70,14 +69,27 @@ public class DealService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // для простоты считаем, что пользователь сейчас клиент
-        CustomerProfile customer = customerProfileRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Customer profile not found"));
+        List<Deal> deals = new ArrayList<>();
 
-        List<Deal> deals = dealRepository.findAllByCustomer(customer);
-        return deals.stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+        // As customer
+        customerProfileRepository.findByUser(user).ifPresent(customer -> {
+            deals.addAll(dealRepository.findAllByCustomer(customer));
+        });
+
+        // As worker
+        workerProfileRepository.findByUser(user).ifPresent(worker -> {
+            List<Deal> workerDeals = dealRepository.findAllByWorker(worker);
+            for (Deal d : workerDeals) {
+                if (deals.stream().noneMatch(existing -> existing.getId().equals(d.getId()))) {
+                    deals.add(d);
+                }
+            }
+        });
+
+        // Sort by createdAt desc
+        deals.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+
+        return deals.stream().map(this::toDto).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -87,37 +99,68 @@ public class DealService {
         return toDto(deal);
     }
 
+    @Transactional
+    public DealDto confirmDeal(UUID userId, UUID dealId) {
+        Deal deal = dealRepository.findById(dealId)
+                .orElseThrow(() -> new RuntimeException("Deal not found"));
+
+        if (deal.getStatus() != DealStatus.IN_PROGRESS) {
+            throw new RuntimeException("Deal is not in progress");
+        }
+
+        UUID customerUserId = deal.getCustomer().getUser().getId();
+        UUID workerUserId = deal.getWorker().getUser().getId();
+
+        if (userId.equals(customerUserId)) {
+            deal.setCustomerConfirmed(true);
+        } else if (userId.equals(workerUserId)) {
+            deal.setWorkerConfirmed(true);
+        } else {
+            throw new RuntimeException("You are not part of this deal");
+        }
+
+        // Both confirmed -> complete
+        if (deal.isCustomerConfirmed() && deal.isWorkerConfirmed()) {
+            deal.setStatus(DealStatus.COMPLETED);
+            deal.setCompletedAt(Instant.now());
+        }
+
+        deal = dealRepository.save(deal);
+        return toDto(deal);
+    }
+
+    // Keep old method name for backward compat
+    @Transactional
+    public DealDto completeDeal(UUID userId, UUID dealId) {
+        return confirmDeal(userId, dealId);
+    }
+
     private DealDto toDto(Deal deal) {
+        String customerName = deal.getCustomer().getDisplayName();
+        String workerName = deal.getWorker().getDisplayName();
+        String title = deal.getJobRequest().getTitle();
+        String description = deal.getJobRequest().getDescription();
+        String category = deal.getJobRequest().getCategory() != null
+                ? deal.getJobRequest().getCategory().getName() : null;
+
         return new DealDto(
                 deal.getId(),
                 deal.getJobRequest().getId(),
                 deal.getJobOffer().getId(),
-                deal.getCustomer().getUser().getId(), // id пользователя-клиента
-                deal.getWorker().getUser().getId(),   // id пользователя-мастера
+                deal.getCustomer().getUser().getId(),
+                deal.getWorker().getUser().getId(),
+                customerName,
+                workerName,
+                title,
+                description,
+                category,
                 deal.getAgreedPrice(),
                 deal.getStatus() != null ? deal.getStatus().name() : null,
+                deal.isCustomerConfirmed(),
+                deal.isWorkerConfirmed(),
                 deal.getCreatedAt(),
                 deal.getStartedAt(),
                 deal.getCompletedAt()
         );
-    }
-
-
-    public DealDto completeDeal(UUID userId, UUID dealId) {
-        Deal deal = dealRepository.findById(dealId)
-                .orElseThrow(() -> new RuntimeException("Deal not found"));
-
-        if (!deal.getCustomer().getUser().getId().equals(userId)) {
-            throw new RuntimeException("You are not owner of this deal");
-        }
-        if (deal.getStatus() != DealStatus.NEW && deal.getStatus() != DealStatus.IN_PROGRESS) {
-            throw new RuntimeException("Deal cannot be completed in this status");
-        }
-
-        deal.setStatus(DealStatus.COMPLETED);
-        deal.setCompletedAt(Instant.now());
-
-        deal = dealRepository.save(deal);
-        return toDto(deal);
     }
 }
