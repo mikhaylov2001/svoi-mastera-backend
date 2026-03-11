@@ -1,6 +1,7 @@
 package ru.svoi.mastera.backend.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ru.svoi.mastera.backend.entity.Message;
@@ -28,4 +29,10 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
     // Unread count for a user
     long countByReceiverAndIsReadFalse(User receiver);
+
+    @Query(value = "delete from messages m where " +
+            "((m.sender_id = :u1 and m.receiver_id = :u2) or (m.sender_id = :u2 and m.receiver_id = :u1))",
+            nativeQuery = true)
+    @Modifying
+    void deleteConversation(@Param("u1") UUID u1, @Param("u2") UUID u2);
 }

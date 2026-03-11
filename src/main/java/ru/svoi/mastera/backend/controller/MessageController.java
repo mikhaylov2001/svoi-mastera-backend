@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.svoi.mastera.backend.dto.ConversationDto;
 import ru.svoi.mastera.backend.dto.MessageDto;
 import ru.svoi.mastera.backend.dto.SendMessageDto;
+import ru.svoi.mastera.backend.dto.UpdateMessageDto;
 import ru.svoi.mastera.backend.service.MessageService;
 
 import java.util.List;
@@ -23,6 +24,28 @@ public class MessageController {
     public MessageDto send(@RequestHeader("X-User-Id") UUID userId,
                            @RequestBody SendMessageDto dto) {
         return messageService.send(userId, dto);
+    }
+
+    // Edit message (only sender)
+    @PatchMapping("/{id}")
+    public MessageDto update(@RequestHeader("X-User-Id") UUID userId,
+                             @PathVariable("id") UUID messageId,
+                             @RequestBody UpdateMessageDto dto) {
+        return messageService.update(userId, messageId, dto);
+    }
+
+    // Delete message (only sender)
+    @DeleteMapping("/{id}")
+    public void delete(@RequestHeader("X-User-Id") UUID userId,
+                       @PathVariable("id") UUID messageId) {
+        messageService.deleteMessage(userId, messageId);
+    }
+
+    // Delete conversation with partner (both directions)
+    @DeleteMapping("/with/{partnerId}")
+    public void deleteConversation(@RequestHeader("X-User-Id") UUID userId,
+                                   @PathVariable UUID partnerId) {
+        messageService.deleteConversation(userId, partnerId);
     }
 
     // Get conversation with specific user

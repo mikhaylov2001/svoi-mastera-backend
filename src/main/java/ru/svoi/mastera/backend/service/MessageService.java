@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.svoi.mastera.backend.dto.ConversationDto;
 import ru.svoi.mastera.backend.dto.MessageDto;
 import ru.svoi.mastera.backend.dto.SendMessageDto;
+import ru.svoi.mastera.backend.dto.UpdateMessageDto;
 import ru.svoi.mastera.backend.entity.JobRequest;
 import ru.svoi.mastera.backend.entity.Message;
 import ru.svoi.mastera.backend.entity.User;
@@ -44,6 +45,47 @@ public class MessageService {
 
         msg = messageRepository.save(msg);
         return toDto(msg);
+    }
+
+    @Transactional
+    public MessageDto update(UUID userId, UUID messageId, UpdateMessageDto dto) {
+        if (dto == null || dto.getText() == null || dto.getText().trim().isEmpty()) {
+            throw new RuntimeException("Text is required");
+        }
+
+        Message msg = messageRepository.findById(messageId)
+                .orElseThrow(() -> new RuntimeException("Message not found"));
+
+        if (!msg.getSender().getId().equals(userId)) {
+            throw new RuntimeException("You are not sender of this message");
+        }
+
+        msg.setText(dto.getText().trim());
+        msg = messageRepository.save(msg);
+        return toDto(msg);
+    }
+
+    @Transactional
+    public void deleteMessage(UUID userId, UUID messageId) {
+        Message msg = messageRepository.findById(messageId)
+                .orElseThrow(() -> new RuntimeException("Message not found"));
+
+        if (!msg.getSender().getId().equals(userId)) {
+            throw new RuntimeException("You are not sender of this message");
+        }
+
+        messageRepository.delete(msg);
+    }
+
+    @Transactional
+    public void deleteConversation(UUID userId, UUID partnerId) {
+        // ensure user exists (same style as other methods)
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        userRepository.findById(partnerId)
+                .orElseThrow(() -> new RuntimeException("Partner not found"));
+
+        messageRepository.deleteConversation(userId, partnerId);
     }
 
     @Transactional(readOnly = true)
