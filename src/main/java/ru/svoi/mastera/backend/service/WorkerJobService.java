@@ -16,6 +16,7 @@ import ru.svoi.mastera.backend.repository.JobOfferRepository;
 import ru.svoi.mastera.backend.repository.JobRequestRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
+import ru.svoi.mastera.backend.service.NotificationService;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +29,7 @@ public class WorkerJobService {
     private final JobOfferRepository jobOfferRepository;
     private final UserRepository userRepository;
     private final WorkerProfileRepository workerProfileRepository;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<JobRequestDto> listOpenJobRequests() {
@@ -64,6 +66,11 @@ public class WorkerJobService {
             offer.setStatus(JobOfferStatus.CREATED);
 
             offer = jobOfferRepository.save(offer);
+
+            // Уведомление заказчику о новом отклике
+            String customerUserId = jobRequest.getCustomer().getUser().getId().toString();
+            String notify = String.format("Новый отклик от %s: %s (%.0f ₽)", worker.getDisplayName(), offer.getMessage(), offer.getPrice());
+            notificationService.sendOfferNotification(customerUserId, notify);
 
             return toJobOfferDto(offer);
 

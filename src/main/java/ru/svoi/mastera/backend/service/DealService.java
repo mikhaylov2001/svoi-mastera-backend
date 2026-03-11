@@ -123,6 +123,10 @@ public class DealService {
         if (deal.isCustomerConfirmed() && deal.isWorkerConfirmed()) {
             deal.setStatus(DealStatus.COMPLETED);
             deal.setCompletedAt(Instant.now());
+            // Synchronize related job request status so frontend и заказчик видят завершение
+            if (deal.getJobRequest() != null) {
+                deal.getJobRequest().setStatus(JobRequestStatus.COMPLETED);
+            }
         }
 
         deal = dealRepository.save(deal);
