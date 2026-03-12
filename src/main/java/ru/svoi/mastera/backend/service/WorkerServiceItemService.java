@@ -35,6 +35,18 @@ public class WorkerServiceItemService {
     }
 
     @Transactional(readOnly = true)
+    public List<WorkerServiceItemDto> listAll(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return workerServiceItemRepository.findAllByActiveTrueOrderByCreatedAtDesc()
+                    .stream().map(this::toDto).collect(Collectors.toList());
+        }
+        String q = query.trim();
+        return workerServiceItemRepository
+                .findAllByActiveTrueAndTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrderByCreatedAtDesc(q, q)
+                .stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<WorkerServiceItemDto> listByWorker(UUID workerUserId) {
         WorkerProfile worker = workerProfileRepository.findByUserId(workerUserId)
                 .orElseThrow(() -> new RuntimeException("Worker profile not found"));

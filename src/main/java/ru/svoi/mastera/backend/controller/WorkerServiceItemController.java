@@ -21,6 +21,11 @@ public class WorkerServiceItemController {
         return workerServiceItemService.listByWorker(workerUserId);
     }
 
+    @GetMapping("/api/v1/worker-services")
+    public List<WorkerServiceItemDto> listAll(@RequestParam(value = "q", required = false) String query) {
+        return workerServiceItemService.listAll(query);
+    }
+
     // Worker: manage own services
     @GetMapping("/api/v1/worker/services")
     public List<WorkerServiceItemDto> listMy(@RequestHeader("X-User-Id") UUID userId) {

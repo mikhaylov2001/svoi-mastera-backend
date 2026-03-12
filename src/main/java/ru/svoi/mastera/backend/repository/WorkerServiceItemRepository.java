@@ -10,5 +10,7 @@ import java.util.UUID;
 public interface WorkerServiceItemRepository extends JpaRepository<WorkerServiceItem, UUID> {
     List<WorkerServiceItem> findAllByWorkerProfileOrderByCreatedAtDesc(WorkerProfile workerProfile);
     List<WorkerServiceItem> findAllByWorkerProfileAndActiveTrueOrderByCreatedAtDesc(WorkerProfile workerProfile);
+    List<WorkerServiceItem> findAllByActiveTrueOrderByCreatedAtDesc();
+    List<WorkerServiceItem> findAllByActiveTrueAndTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrderByCreatedAtDesc(String title, String description);
 }
 
