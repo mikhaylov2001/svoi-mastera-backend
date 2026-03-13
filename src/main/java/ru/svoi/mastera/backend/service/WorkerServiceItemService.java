@@ -122,9 +122,17 @@ public class WorkerServiceItemService {
     }
 
     private WorkerServiceItemDto toDto(WorkerServiceItem item) {
+        var worker = item.getWorkerProfile();
+        var user = worker.getUser();
+        var name = worker.getDisplayName();
+        if (name == null || name.isBlank()) {
+            name = user == null ? "" : user.getEmail();
+        }
+
         return new WorkerServiceItemDto(
                 item.getId(),
-                item.getWorkerProfile().getUser().getId(),
+                user == null ? null : user.getId(),
+                name,
                 item.getTitle(),
                 item.getDescription(),
                 item.getPriceFrom(),
