@@ -32,5 +32,9 @@ public class WorkerServiceItem extends BaseEntity {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
 }
 

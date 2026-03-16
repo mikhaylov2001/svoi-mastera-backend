@@ -5,9 +5,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.svoi.mastera.backend.dto.UpsertWorkerServiceItemDto;
 import ru.svoi.mastera.backend.dto.WorkerServiceItemDto;
+import ru.svoi.mastera.backend.entity.Category;
 import ru.svoi.mastera.backend.entity.User;
 import ru.svoi.mastera.backend.entity.WorkerProfile;
 import ru.svoi.mastera.backend.entity.WorkerServiceItem;
+import ru.svoi.mastera.backend.repository.CategoryRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
 import ru.svoi.mastera.backend.repository.WorkerServiceItemRepository;
@@ -23,6 +25,7 @@ public class WorkerServiceItemService {
     private final WorkerServiceItemRepository workerServiceItemRepository;
     private final WorkerProfileRepository workerProfileRepository;
     private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
 
     @Transactional(readOnly = true)
     public List<WorkerServiceItemDto> listMy(UUID userId) {
@@ -72,6 +75,12 @@ public class WorkerServiceItemService {
         item.setPriceTo(dto != null ? dto.getPriceTo() : null);
         item.setActive(dto == null || dto.getActive() == null || dto.getActive());
 
+        if (dto != null && dto.getCategoryId() != null) {
+            Category category = categoryRepository.findById(dto.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+            item.setCategory(category);
+        }
+
         item = workerServiceItemRepository.save(item);
         return toDto(item);
     }
@@ -99,6 +108,12 @@ public class WorkerServiceItemService {
         if (dto != null && dto.getPriceFrom() != null) item.setPriceFrom(dto.getPriceFrom());
         if (dto != null && dto.getPriceTo() != null) item.setPriceTo(dto.getPriceTo());
         if (dto != null && dto.getActive() != null) item.setActive(dto.getActive());
+
+        if (dto != null && dto.getCategoryId() != null) {
+            Category category = categoryRepository.findById(dto.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+            item.setCategory(category);
+        }
 
         item = workerServiceItemRepository.save(item);
         return toDto(item);
@@ -138,7 +153,8 @@ public class WorkerServiceItemService {
                 item.getPriceFrom(),
                 item.getPriceTo(),
                 item.isActive(),
-                item.getCreatedAt()
+                item.getCreatedAt(),
+                item.getCategory() != null ? item.getCategory().getId() : null
         );
     }
 }

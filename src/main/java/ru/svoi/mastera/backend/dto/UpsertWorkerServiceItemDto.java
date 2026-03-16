@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -15,5 +16,7 @@ public class UpsertWorkerServiceItemDto {
     private BigDecimal priceFrom;
     private BigDecimal priceTo;
     private Boolean active;
+    UUID categoryId;
+
 }
 

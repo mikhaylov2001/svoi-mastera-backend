@@ -13,6 +13,7 @@ public record WorkerServiceItemDto(
         BigDecimal priceFrom,
         BigDecimal priceTo,
         boolean active,
-        Instant createdAt
+        Instant createdAt,
+        UUID categoryId
 ) {}
 
