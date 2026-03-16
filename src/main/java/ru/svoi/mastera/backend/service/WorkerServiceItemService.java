@@ -5,11 +5,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.svoi.mastera.backend.dto.UpsertWorkerServiceItemDto;
 import ru.svoi.mastera.backend.dto.WorkerServiceItemDto;
-import ru.svoi.mastera.backend.entity.Category;
+import ru.svoi.mastera.backend.entity.Category;  // ✅ ДОБАВЛЕНО
 import ru.svoi.mastera.backend.entity.User;
 import ru.svoi.mastera.backend.entity.WorkerProfile;
 import ru.svoi.mastera.backend.entity.WorkerServiceItem;
-import ru.svoi.mastera.backend.repository.CategoryRepository;
+import ru.svoi.mastera.backend.repository.CategoryRepository;  // ✅ ДОБАВЛЕНО
 import ru.svoi.mastera.backend.repository.UserRepository;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
 import ru.svoi.mastera.backend.repository.WorkerServiceItemRepository;
@@ -25,7 +25,7 @@ public class WorkerServiceItemService {
     private final WorkerServiceItemRepository workerServiceItemRepository;
     private final WorkerProfileRepository workerProfileRepository;
     private final UserRepository userRepository;
-    private final CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;  // ✅ ДОБАВЛЕНО
 
     @Transactional(readOnly = true)
     public List<WorkerServiceItemDto> listMy(UUID userId) {
@@ -67,19 +67,23 @@ public class WorkerServiceItemService {
         String title = dto != null && dto.getTitle() != null ? dto.getTitle().trim() : "";
         if (title.isEmpty()) throw new RuntimeException("Title is required");
 
+        // ✅ ДОБАВЛЕНО: categoryId обязателен
+        if (dto == null || dto.getCategoryId() == null) {
+            throw new RuntimeException("Category is required");
+        }
+
         WorkerServiceItem item = new WorkerServiceItem();
         item.setWorkerProfile(worker);
         item.setTitle(title);
-        item.setDescription(dto != null ? dto.getDescription() : null);
-        item.setPriceFrom(dto != null ? dto.getPriceFrom() : null);
-        item.setPriceTo(dto != null ? dto.getPriceTo() : null);
-        item.setActive(dto == null || dto.getActive() == null || dto.getActive());
+        item.setDescription(dto.getDescription());
+        item.setPriceFrom(dto.getPriceFrom());
+        item.setPriceTo(dto.getPriceTo());
+        item.setActive(dto.getActive() == null || dto.getActive());
 
-        if (dto != null && dto.getCategoryId() != null) {
-            Category category = categoryRepository.findById(dto.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
-            item.setCategory(category);
-        }
+        // Устанавливаем категорию (обязательно)
+        Category category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        item.setCategory(category);
 
         item = workerServiceItemRepository.save(item);
         return toDto(item);
@@ -109,6 +113,7 @@ public class WorkerServiceItemService {
         if (dto != null && dto.getPriceTo() != null) item.setPriceTo(dto.getPriceTo());
         if (dto != null && dto.getActive() != null) item.setActive(dto.getActive());
 
+        // ✅ ДОБАВЛЕНО: Обновляем категорию если указана
         if (dto != null && dto.getCategoryId() != null) {
             Category category = categoryRepository.findById(dto.getCategoryId())
                     .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -154,8 +159,7 @@ public class WorkerServiceItemService {
                 item.getPriceTo(),
                 item.isActive(),
                 item.getCreatedAt(),
-                item.getCategory() != null ? item.getCategory().getId() : null
+                item.getCategory() != null ? item.getCategory().getId() : null  // ✅ ДОБАВЛЕНО
         );
     }
 }
-

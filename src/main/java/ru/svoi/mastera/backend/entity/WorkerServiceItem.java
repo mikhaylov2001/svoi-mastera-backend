@@ -18,6 +18,11 @@ public class WorkerServiceItem extends BaseEntity {
     @JoinColumn(name = "worker_profile_id", nullable = false)
     private WorkerProfile workerProfile;
 
+    // ✅ ДОБАВЛЕНО: Связь с категорией
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
     @Column(nullable = false, length = 200)
     private String title;
 
@@ -32,9 +37,4 @@ public class WorkerServiceItem extends BaseEntity {
 
     @Column(nullable = false)
     private boolean active = true;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private Category category;
 }
-
