@@ -66,6 +66,7 @@ public class ReviewService {
                 .collect(Collectors.toList());
     }
 
+    // ✅ НОВЫЙ МЕТОД: Получить статистику мастера
     @Transactional(readOnly = true)
     public WorkerStatsDto getWorkerStats(UUID workerUserId) {
         WorkerProfile worker = workerProfileRepository.findByUserId(workerUserId)
