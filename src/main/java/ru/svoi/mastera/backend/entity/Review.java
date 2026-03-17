@@ -42,5 +42,8 @@ public class Review extends BaseEntity {
     @Column(nullable = false, length = 50)
     private ReviewStatus status = ReviewStatus.MODERATION;
 
+    @Column(name = "badges", columnDefinition = "TEXT")
+    private String badges;
+
 
 }
