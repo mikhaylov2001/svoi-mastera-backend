@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.svoi.mastera.backend.dto.ReviewCreateDto;
 
 import ru.svoi.mastera.backend.dto.ReviewDto;
+import ru.svoi.mastera.backend.dto.WorkerStatsDto;
 import ru.svoi.mastera.backend.entity.*;
 import ru.svoi.mastera.backend.entity.enams.DealStatus;
 import ru.svoi.mastera.backend.repository.DealRepository;
@@ -62,11 +63,45 @@ public class ReviewService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public WorkerStatsDto getWorkerStats(UUID workerUserId) {
+        WorkerProfile worker = workerProfileRepository.findByUserId(workerUserId)
+                .orElseThrow(() -> new RuntimeException("Worker profile not found"));
+
+        List<Review> reviews = reviewRepository.findAllByTargetWorker(worker);
+
+        if (reviews.isEmpty()) {
+            return new WorkerStatsDto(0.0, 0L);
+        }
+
+        // Вычисляем средний рейтинг
+        double averageRating = reviews.stream()
+                .mapToInt(Review::getRating)
+                .average()
+                .orElse(0.0);
+
+        // Округляем до 1 знака после запятой
+        averageRating = Math.round(averageRating * 10.0) / 10.0;
+
+        return new WorkerStatsDto(averageRating, (long) reviews.size());
+    }
+
     private ReviewDto toDto(Review review) {
+        // ✅ ИСПРАВЛЕНО: Получаем имя автора
+        String authorName = "Клиент";
+        if (review.getAuthorUser() != null) {
+            if (review.getAuthorUser().getCustomerProfile() != null) {
+                authorName = review.getAuthorUser().getCustomerProfile().getDisplayName();
+            } else if (review.getAuthorUser().getWorkerProfile() != null) {
+                authorName = review.getAuthorUser().getWorkerProfile().getDisplayName();
+            }
+        }
+
         return new ReviewDto(
                 review.getId(),
                 review.getDeal().getId(),
                 review.getAuthorUser().getId(),
+                authorName,  // ✅ Теперь переменная определена
                 review.getTargetWorker().getUser().getId(),
                 review.getRating(),
                 review.getText(),

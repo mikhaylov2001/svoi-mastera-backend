@@ -7,9 +7,10 @@ public record ReviewDto(
         UUID id,
         UUID dealId,
         UUID authorUserId,
-        UUID targetWorkerUserId,
-        int rating,
-        String text,
+        String targetWorkerUserId,
+        UUID rating,
+        Integer text,
         String status,
+        String authorName,
         Instant createdAt
 ) {}
