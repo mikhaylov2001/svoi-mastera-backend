@@ -2,11 +2,10 @@ package ru.svoi.mastera.backend.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.svoi.mastera.backend.dto.ReviewDto;
-import ru.svoi.mastera.backend.dto.WorkerCompletedWorkDto;
 import ru.svoi.mastera.backend.dto.WorkerStatsDto;
-import ru.svoi.mastera.backend.service.DealService;
+import ru.svoi.mastera.backend.dto.WorkerCompletedWorkDto;
 import ru.svoi.mastera.backend.service.ReviewService;
+import ru.svoi.mastera.backend.service.DealService;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,11 +24,10 @@ public class WorkerPublicController {
         return reviewService.getWorkerStats(workerUserId);
     }
 
-    // Получить отзывы мастера
-    @GetMapping("/{workerUserId}/reviews")
-    public List<ReviewDto> getWorkerReviews(@PathVariable UUID workerUserId) {
-        return reviewService.listByWorker(workerUserId);
-    }
+    // ✅ УДАЛЕНО: getWorkerReviews - дублирует ReviewController
+    // Используйте существующий endpoint: GET /api/v1/reviews/worker/{workerUserId}
+
+    // Получить завершённые работы мастера
     @GetMapping("/{workerUserId}/completed-works")
     public List<WorkerCompletedWorkDto> getWorkerCompletedWorks(@PathVariable UUID workerUserId) {
         return dealService.getWorkerCompletedWorks(workerUserId);
