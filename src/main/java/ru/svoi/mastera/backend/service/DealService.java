@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.svoi.mastera.backend.dto.DealDto;
+import ru.svoi.mastera.backend.dto.WorkerCompletedWorkDto;
 import ru.svoi.mastera.backend.entity.*;
 import ru.svoi.mastera.backend.entity.enams.DealStatus;
 import ru.svoi.mastera.backend.entity.enams.JobOfferStatus;
@@ -167,4 +168,44 @@ public class DealService {
                 deal.getCompletedAt()
         );
     }
+
+    @Transactional(readOnly = true)
+    public List<WorkerCompletedWorkDto> getWorkerCompletedWorks(UUID workerUserId) {
+        WorkerProfile worker = workerProfileRepository.findByUserId(workerUserId)
+                .orElseThrow(() -> new RuntimeException("Worker profile not found"));
+
+        List<Deal> completedDeals = dealRepository.findAllByWorker(worker)
+                .stream()
+                .filter(deal -> deal.getStatus() == DealStatus.COMPLETED)
+                .sorted((a, b) -> b.getCompletedAt().compareTo(a.getCompletedAt())) // Новые сначала
+                .collect(java.util.stream.Collectors.toList());
+
+        return completedDeals.stream()
+                .map(this::toCompletedWorkDto)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    private WorkerCompletedWorkDto toCompletedWorkDto(Deal deal) {
+        String title = deal.getJobRequest().getTitle();
+        String description = deal.getJobRequest().getDescription();
+        String categoryName = deal.getJobRequest().getCategory() != null
+                ? deal.getJobRequest().getCategory().getName() : null;
+
+        // Только имя клиента без фамилии для приватности
+        String customerFullName = deal.getCustomer().getDisplayName();
+        String customerFirstName = customerFullName != null && customerFullName.contains(" ")
+                ? customerFullName.split(" ")[0]
+                : customerFullName;
+
+        return new WorkerCompletedWorkDto(
+                deal.getId(),
+                title,
+                description,
+                categoryName,
+                deal.getAgreedPrice(),
+                deal.getCompletedAt(),
+                customerFirstName
+        );
+    }
+
 }
