@@ -33,5 +33,7 @@ public class CustomerProfile extends BaseEntity {
     @OneToMany(mappedBy = "customer")
     private List<JobRequest> jobRequests;
 
+    private String phone;
+
 }
 

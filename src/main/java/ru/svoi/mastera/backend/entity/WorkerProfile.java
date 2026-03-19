@@ -49,4 +49,6 @@ public class WorkerProfile extends BaseEntity{
 
     @OneToMany(mappedBy = "targetWorker")
     private List<Review> receivedReviews;
+
+    private String phone;
 }
