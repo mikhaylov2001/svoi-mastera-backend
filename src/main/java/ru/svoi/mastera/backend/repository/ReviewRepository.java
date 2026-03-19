@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     List<Review> findAllByTargetWorker(WorkerProfile targetWorker);
+    boolean existsByDealId(UUID dealId);
 }
