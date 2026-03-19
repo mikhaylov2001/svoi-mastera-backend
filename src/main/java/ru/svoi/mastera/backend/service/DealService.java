@@ -26,6 +26,7 @@ public class DealService {
     private final UserRepository userRepository;
     private final CustomerProfileRepository customerProfileRepository;
     private final WorkerProfileRepository workerProfileRepository;
+    private final ReviewRepository reviewRepository;
 
     @Transactional
     public DealDto acceptOffer(UUID customerUserId, UUID jobRequestId, UUID offerId) {
@@ -148,6 +149,9 @@ public class DealService {
         String category = deal.getJobRequest().getCategory() != null
                 ? deal.getJobRequest().getCategory().getName() : null;
 
+        // Проверяем есть ли отзыв для этой сделки
+        boolean hasReview = reviewRepository.existsByDealId(deal.getId());
+
         return new DealDto(
                 deal.getId(),
                 deal.getJobRequest().getId(),
@@ -165,7 +169,8 @@ public class DealService {
                 deal.isWorkerConfirmed(),
                 deal.getCreatedAt(),
                 deal.getStartedAt(),
-                deal.getCompletedAt()
+                deal.getCompletedAt(),
+                hasReview
         );
     }
 

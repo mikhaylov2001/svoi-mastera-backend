@@ -27,6 +27,7 @@ public class DealDto {
     private Instant createdAt;
     private Instant startedAt;
     private Instant completedAt;
+    private Boolean hasReview;
 
     public DealDto(UUID id, UUID jobRequestId, UUID jobOfferId,
                    UUID customerId, UUID workerId,
@@ -34,7 +35,8 @@ public class DealDto {
                    String title, String description, String category,
                    BigDecimal agreedPrice, String status,
                    boolean customerConfirmed, boolean workerConfirmed,
-                   Instant createdAt, Instant startedAt, Instant completedAt) {
+                   Instant createdAt, Instant startedAt, Instant completedAt,
+                   Boolean hasReview) {
         this.id = id;
         this.jobRequestId = jobRequestId;
         this.jobOfferId = jobOfferId;
@@ -52,5 +54,6 @@ public class DealDto {
         this.createdAt = createdAt;
         this.startedAt = startedAt;
         this.completedAt = completedAt;
+        this.hasReview = hasReview;
     }
 }
