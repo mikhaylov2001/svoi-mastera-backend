@@ -20,25 +20,17 @@ public class NotificationSettings {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    // Способы уведомлений
-    @Column(name = "email_notifications", nullable = false)
-    private Boolean emailNotifications = true;
-
-    @Column(name = "push_notifications", nullable = false)
-    private Boolean pushNotifications = false;
-
-    // О чём уведомлять
     @Column(name = "new_deals", nullable = false)
     private Boolean newDeals = true;
-
-    @Column(name = "deal_updates", nullable = false)
-    private Boolean dealUpdates = true;
 
     @Column(name = "messages", nullable = false)
     private Boolean messages = true;
 
     @Column(name = "reviews", nullable = false)
     private Boolean reviews = true;
+
+    @Column(name = "system")
+    private Boolean system = true;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

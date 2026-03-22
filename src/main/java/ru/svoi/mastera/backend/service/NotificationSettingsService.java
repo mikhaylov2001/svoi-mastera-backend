@@ -37,12 +37,10 @@ public class NotificationSettingsService {
                 .orElseGet(() -> createDefaultSettings(user));
 
         // Обновляем настройки
-        settings.setEmailNotifications(dto.getEmailNotifications());
-        settings.setPushNotifications(dto.getPushNotifications());
         settings.setNewDeals(dto.getNewDeals());
-        settings.setDealUpdates(dto.getDealUpdates());
         settings.setMessages(dto.getMessages());
         settings.setReviews(dto.getReviews());
+        settings.setSystem(dto.getSystem());
 
         settings = settingsRepository.save(settings);
         return toDto(settings);
@@ -51,23 +49,19 @@ public class NotificationSettingsService {
     private NotificationSettings createDefaultSettings(User user) {
         NotificationSettings settings = new NotificationSettings();
         settings.setUser(user);
-        settings.setEmailNotifications(true);
-        settings.setPushNotifications(false);
         settings.setNewDeals(true);
-        settings.setDealUpdates(true);
         settings.setMessages(true);
         settings.setReviews(true);
+        settings.setSystem(true);
         return settingsRepository.save(settings);
     }
 
     private NotificationSettingsDto toDto(NotificationSettings settings) {
         return new NotificationSettingsDto(
-                settings.getEmailNotifications(),
-                settings.getPushNotifications(),
                 settings.getNewDeals(),
-                settings.getDealUpdates(),
                 settings.getMessages(),
-                settings.getReviews()
+                settings.getReviews(),
+                settings.getSystem()
         );
     }
 }

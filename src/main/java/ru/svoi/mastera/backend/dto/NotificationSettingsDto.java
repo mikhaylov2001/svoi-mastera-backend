@@ -8,10 +8,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class NotificationSettingsDto {
-    private Boolean emailNotifications;
-    private Boolean pushNotifications;
     private Boolean newDeals;
-    private Boolean dealUpdates;
     private Boolean messages;
     private Boolean reviews;
+    private Boolean system;
 }
