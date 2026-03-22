@@ -8,11 +8,11 @@ public record ReviewDto(
         UUID id,
         UUID dealId,
         UUID authorUserId,
-        String targetWorkerUserId,
-        UUID rating,
-        Integer text,
-        String status,
         String authorName,
+        UUID targetWorkerUserId,
+        Integer rating,
+        String text,
+        String status,
         Instant createdAt,
-        List<String> badges  // ✅ ДОБАВЛЕНО - бейджи/смайлики ["polite", "fast", "quality", "price"]
+        List<String> badges
 ) {}
