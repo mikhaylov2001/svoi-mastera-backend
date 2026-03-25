@@ -13,4 +13,6 @@ public class SendMessageDto {
     private UUID receiverId;
     private UUID jobRequestId; // optional
     private String text;
+    private String attachmentUrl;  // URL файла после загрузки (optional)
+    private String attachmentType;
 }

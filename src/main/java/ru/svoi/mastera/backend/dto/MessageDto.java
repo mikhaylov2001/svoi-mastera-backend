@@ -12,5 +12,7 @@ public record MessageDto(
         UUID jobRequestId,
         String text,
         boolean isRead,
-        Instant createdAt
+        Instant createdAt,
+        String attachmentUrl,   // URL файла (фото/видео/голосовое/файл)
+        String attachmentType   // "image" | "video" | "voice" | "file" | "location"
 ) {}
