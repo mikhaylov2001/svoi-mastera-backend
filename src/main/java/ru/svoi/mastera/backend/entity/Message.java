@@ -29,4 +29,11 @@ public class Message extends BaseEntity {
 
     @Column(nullable = false)
     private boolean isRead = false;
+
+    @Column(name = "attachment_url", length = 1000)
+    private String attachmentUrl;
+
+    // Тип вложения: "image" | "video" | "voice" | "file" | "location"
+    @Column(name = "attachment_type", length = 50)
+    private String attachmentType;
 }

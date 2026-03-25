@@ -38,6 +38,10 @@ public class MessageService {
         msg.setText(dto.getText());
         msg.setRead(false);
 
+        // Сохраняем вложение (фото/видео/голосовое/файл/геолокация)
+        msg.setAttachmentUrl(dto.getAttachmentUrl());
+        msg.setAttachmentType(dto.getAttachmentType());
+
         if (dto.getJobRequestId() != null) {
             JobRequest jr = jobRequestRepository.findById(dto.getJobRequestId()).orElse(null);
             msg.setJobRequest(jr);
@@ -158,7 +162,9 @@ public class MessageService {
                 m.getJobRequest() != null ? m.getJobRequest().getId() : null,
                 m.getText(),
                 m.isRead(),
-                m.getCreatedAt()
+                m.getCreatedAt(),
+                m.getAttachmentUrl(),   // URL файла (фото/видео/голосовое/документ)
+                m.getAttachmentType()   // тип: "image" | "video" | "voice" | "file" | "location"
         );
     }
 }
