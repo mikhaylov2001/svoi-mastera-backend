@@ -132,7 +132,7 @@ public class MessageService {
                     partnerId,
                     partnerName,
                     partner.getAvatarUrl(),
-                    m.getText(),
+                    formatPreview(m.getText()),
                     m.getCreatedAt(),
                     unread
             );
@@ -150,6 +150,17 @@ public class MessageService {
         if (user.getCustomerProfile() != null) return user.getCustomerProfile().getDisplayName();
         if (user.getWorkerProfile() != null) return user.getWorkerProfile().getDisplayName();
         return "Пользователь";
+    }
+
+    // Красивый превью для списка диалогов
+    private String formatPreview(String text) {
+        if (text == null) return "";
+        if (text.startsWith("📷 ")) return "📷 Фотография";
+        if (text.startsWith("🎥 ")) return "🎥 Видео";
+        if (text.startsWith("🎤 ")) return "🎤 Голосовое";
+        if (text.startsWith("📎 ")) return "📎 Файл";
+        if (text.startsWith("📍 ")) return "📍 Местоположение";
+        return text;
     }
 
     private MessageDto toDto(Message m) {
