@@ -23,28 +23,32 @@ public class FileUploadController {
 
     private static final long MAX_SIZE = 50L * 1024 * 1024; // 50 MB
 
-    private static final Set<String> ALLOWED_TYPES = Set.of(
-        "image/jpeg", "image/png", "image/gif", "image/webp", "image/heic",
-        "video/mp4", "video/webm", "video/quicktime", "video/x-msvideo",
-        "audio/webm", "audio/mp4", "audio/mpeg", "audio/ogg", "audio/wav", "audio/aac",
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/vnd.ms-excel",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "application/vnd.ms-powerpoint",
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        "application/zip",
-        "application/x-rar-compressed",
-        "application/x-7z-compressed",
-        "text/plain"
-    );
+    // Проверка типа файла — по префиксу для медиа, точно для документов
+    private static boolean isAllowed(String contentType) {
+        if (contentType == null) return false;
+        String ct = contentType.toLowerCase().split(";")[0].trim(); // убираем ";codecs=..."
+        if (ct.startsWith("image/")) return true;
+        if (ct.startsWith("audio/")) return true;
+        if (ct.startsWith("video/")) return true;
+        return Set.of(
+                "application/pdf",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "application/vnd.ms-powerpoint",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                "application/zip", "application/x-zip-compressed",
+                "application/x-rar-compressed", "application/x-7z-compressed",
+                "text/plain"
+        ).contains(ct);
+    }
 
     /**
      * POST /api/v1/files/upload
      * Header: X-User-Id: {userId}
      * Body: multipart/form-data, поле "file"
-     * 
+     *
      * Возвращает: { url, filename, size, contentType }
      */
     @PostMapping("/upload")
@@ -55,17 +59,22 @@ public class FileUploadController {
         // Валидация
         if (file.isEmpty()) {
             return ResponseEntity.badRequest()
-                .body(Map.of("message", "Файл пустой"));
+                    .body(Map.of("message", "Файл пустой"));
         }
         if (file.getSize() > MAX_SIZE) {
             return ResponseEntity.badRequest()
-                .body(Map.of("message", "Файл слишком большой. Максимум 50 МБ"));
+                    .body(Map.of("message", "Файл слишком большой. Максимум 50 МБ"));
         }
         String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_TYPES.contains(contentType)) {
+        if (!isAllowed(contentType)) {
             return ResponseEntity.badRequest()
-                .body(Map.of("message", "Недопустимый тип файла: " + contentType));
+                    .body(Map.of("message", "Недопустимый тип файла: " + contentType));
         }
+
+        // Нормализуем contentType — убираем ;codecs=...
+        String normalizedType = contentType != null
+                ? contentType.toLowerCase().split(";")[0].trim()
+                : "application/octet-stream";
 
         try {
             // Директория для пользователя: /tmp/chat-files/{userId}/
@@ -76,8 +85,8 @@ public class FileUploadController {
             // Уникальное имя файла
             String originalName = file.getOriginalFilename();
             String ext = (originalName != null && originalName.contains("."))
-                ? originalName.substring(originalName.lastIndexOf('.'))
-                : "";
+                    ? originalName.substring(originalName.lastIndexOf('.'))
+                    : "";
             String uniqueName = UUID.randomUUID() + ext;
 
             // Сохраняем файл
@@ -91,13 +100,13 @@ public class FileUploadController {
             response.put("url", fileUrl);
             response.put("filename", originalName);
             response.put("size", file.getSize());
-            response.put("contentType", contentType);
+            response.put("contentType", normalizedType);
 
             return ResponseEntity.ok(response);
 
         } catch (IOException e) {
             return ResponseEntity.internalServerError()
-                .body(Map.of("message", "Ошибка сохранения: " + e.getMessage()));
+                    .body(Map.of("message", "Ошибка сохранения: " + e.getMessage()));
         }
     }
 
@@ -126,10 +135,10 @@ public class FileUploadController {
             if (contentType == null) contentType = "application/octet-stream";
 
             return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header("Content-Disposition", "inline; filename=\"" + filename + "\"")
-                .header("Cache-Control", "public, max-age=31536000") // кешируем на год
-                .body(content);
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header("Content-Disposition", "inline; filename=\"" + filename + "\"")
+                    .header("Cache-Control", "public, max-age=31536000") // кешируем на год
+                    .body(content);
 
         } catch (IOException e) {
             return ResponseEntity.internalServerError().build();
