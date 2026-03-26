@@ -30,7 +30,8 @@ public class Message extends BaseEntity {
     @Column(nullable = false)
     private boolean isRead = false;
 
-    @Column(name = "attachment_url", length = 1000)
+    // URL файла на сервере или base64 данные (для голосовых без файлового сервера)
+    @Column(name = "attachment_url", columnDefinition = "TEXT")
     private String attachmentUrl;
 
     // Тип вложения: "image" | "video" | "voice" | "file" | "location"
