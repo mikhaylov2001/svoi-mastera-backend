@@ -6,15 +6,11 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
     username: ${SPRING_DATASOURCE_USERNAME:sa}
     password: ${SPRING_DATASOURCE_PASSWORD:}
-    # НЕ указываем driver-class-name — Spring сам определит по URL
-    # postgres URL → postgresql driver, h2 URL → h2 driver
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.h2.Driver}
 
   jpa:
     hibernate:
       ddl-auto: update
-    properties:
-      hibernate:
-      # НЕ указываем dialect явно — Hibernate сам определит по драйверу
     show-sql: false
     open-in-view: false
 

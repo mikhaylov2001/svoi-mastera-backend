@@ -24,3 +24,7 @@ alter table users add column avatar_url varchar(500);
 
 -- Add payout_amount column to deals if missing
 alter table deals add column if not exists payout_amount numeric(12,2);
+
+ALTER TABLE messages
+    ADD COLUMN IF NOT EXISTS attachment_url  VARCHAR(1000),
+    ADD COLUMN IF NOT EXISTS attachment_type VARCHAR(50);
