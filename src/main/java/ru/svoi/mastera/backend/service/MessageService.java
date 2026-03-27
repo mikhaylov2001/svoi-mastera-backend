@@ -147,9 +147,18 @@ public class MessageService {
     }
 
     private String getDisplayName(User user) {
-        if (user.getCustomerProfile() != null) return user.getCustomerProfile().getDisplayName();
-        if (user.getWorkerProfile() != null) return user.getWorkerProfile().getDisplayName();
-        return "Пользователь";
+        String firstName = null;
+        String lastName  = null;
+        if (user.getCustomerProfile() != null) {
+            firstName = user.getCustomerProfile().getDisplayName();
+            lastName  = user.getCustomerProfile().getLastName();
+        } else if (user.getWorkerProfile() != null) {
+            firstName = user.getWorkerProfile().getDisplayName();
+            lastName  = user.getWorkerProfile().getLastName();
+        }
+        if (firstName == null) return "Пользователь";
+        if (lastName != null && !lastName.isBlank()) return firstName + " " + lastName;
+        return firstName;
     }
 
     // Красивый превью для списка диалогов
