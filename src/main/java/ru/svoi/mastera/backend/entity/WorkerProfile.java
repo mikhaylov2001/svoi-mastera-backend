@@ -51,4 +51,7 @@ public class WorkerProfile extends BaseEntity{
     private List<Review> receivedReviews;
 
     private String phone;
+
+    @Column(length = 150)
+    private String lastName;
 }

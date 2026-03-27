@@ -13,9 +13,10 @@ import java.util.UUID;
 public class UserProfileDto {
     private UUID id;
     private String displayName;
+    private String lastName;    // ← третий аргумент (после displayName)
     private String email;
     private String phone;
     private String city;
-    private String role; // "CUSTOMER" или "WORKER"
+    private String role;
     private Instant createdAt;
 }

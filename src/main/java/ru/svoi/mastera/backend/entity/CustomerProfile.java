@@ -35,5 +35,8 @@ public class CustomerProfile extends BaseEntity {
 
     private String phone;
 
+    @Column(length = 150)
+    private String lastName;
+
 }
 

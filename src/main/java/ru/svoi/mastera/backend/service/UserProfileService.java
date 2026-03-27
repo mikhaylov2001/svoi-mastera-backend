@@ -30,29 +30,32 @@ public class UserProfileService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String displayName = null;
+        String lastName = null;
         String phone = null;
         String city = null;
         String role = null;
 
-        // Проверяем какой профиль у пользователя
         CustomerProfile customerProfile = customerProfileRepository.findByUser(user).orElse(null);
         WorkerProfile workerProfile = workerProfileRepository.findByUser(user).orElse(null);
 
         if (workerProfile != null) {
             displayName = workerProfile.getDisplayName();
-            phone = workerProfile.getPhone();
-            city = workerProfile.getCity();
-            role = "WORKER";
+            lastName    = workerProfile.getLastName();
+            phone       = workerProfile.getPhone();
+            city        = workerProfile.getCity();
+            role        = "WORKER";
         } else if (customerProfile != null) {
             displayName = customerProfile.getDisplayName();
-            phone = customerProfile.getPhone();
-            city = customerProfile.getCity();
-            role = "CUSTOMER";
+            lastName    = customerProfile.getLastName();
+            phone       = customerProfile.getPhone();
+            city        = customerProfile.getCity();
+            role        = "CUSTOMER";
         }
 
         return new UserProfileDto(
                 user.getId(),
                 displayName,
+                lastName,
                 user.getEmail(),
                 phone,
                 city,
@@ -82,13 +85,15 @@ public class UserProfileService {
 
         if (workerProfile != null) {
             if (dto.getDisplayName() != null) workerProfile.setDisplayName(dto.getDisplayName());
-            if (dto.getPhone() != null) workerProfile.setPhone(dto.getPhone());
-            if (dto.getCity() != null) workerProfile.setCity(dto.getCity());
+            if (dto.getLastName()    != null) workerProfile.setLastName(dto.getLastName());
+            if (dto.getPhone()       != null) workerProfile.setPhone(dto.getPhone());
+            if (dto.getCity()        != null) workerProfile.setCity(dto.getCity());
             workerProfileRepository.save(workerProfile);
         } else if (customerProfile != null) {
             if (dto.getDisplayName() != null) customerProfile.setDisplayName(dto.getDisplayName());
-            if (dto.getPhone() != null) customerProfile.setPhone(dto.getPhone());
-            if (dto.getCity() != null) customerProfile.setCity(dto.getCity());
+            if (dto.getLastName()    != null) customerProfile.setLastName(dto.getLastName());
+            if (dto.getPhone()       != null) customerProfile.setPhone(dto.getPhone());
+            if (dto.getCity()        != null) customerProfile.setCity(dto.getCity());
             customerProfileRepository.save(customerProfile);
         }
 
