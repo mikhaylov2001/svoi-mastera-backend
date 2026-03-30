@@ -12,6 +12,7 @@ public class UserDto {
     private UUID id;
     private String email;
     private String displayName;
+    private String lastName;
     private boolean hasWorkerProfile;
     private boolean hasCustomerProfile;
     private String avatarUrl;

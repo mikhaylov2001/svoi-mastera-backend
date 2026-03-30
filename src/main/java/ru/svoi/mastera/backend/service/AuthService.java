@@ -94,15 +94,19 @@ public class AuthService {
 
     private UserDto toUserDto(User user, boolean hasWorker, boolean hasCustomer) {
         String displayName = null;
+        String lastName = null;
         if (user.getCustomerProfile() != null) {
             displayName = user.getCustomerProfile().getDisplayName();
+            lastName    = user.getCustomerProfile().getLastName();
         } else if (user.getWorkerProfile() != null) {
             displayName = user.getWorkerProfile().getDisplayName();
+            lastName    = user.getWorkerProfile().getLastName();
         }
         return new UserDto(
                 user.getId(),
                 user.getEmail(),
                 displayName,
+                lastName,
                 hasWorker,
                 hasCustomer,
                 user.getAvatarUrl()
