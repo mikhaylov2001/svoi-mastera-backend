@@ -11,6 +11,7 @@ public class RegisterRequest {
     private String email;
     private String password;
     private String displayName;
+    private String lastName;
     private Boolean asWorker;
     private Boolean asCustomer;
 

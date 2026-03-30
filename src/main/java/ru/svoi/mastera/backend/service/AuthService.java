@@ -46,6 +46,7 @@ public class AuthService {
             WorkerProfile worker = new WorkerProfile();
             worker.setUser(user);
             worker.setDisplayName(request.getDisplayName());
+            worker.setLastName(request.getLastName());
             worker.setActive(true);
             worker.setVerified(false);
             workerProfileRepository.save(worker);
@@ -55,6 +56,7 @@ public class AuthService {
             CustomerProfile customer = new CustomerProfile();
             customer.setUser(user);
             customer.setDisplayName(request.getDisplayName());
+            customer.setLastName(request.getLastName());
             customerProfileRepository.save(customer);
         }
 
