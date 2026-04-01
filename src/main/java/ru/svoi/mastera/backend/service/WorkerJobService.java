@@ -81,7 +81,8 @@ public class WorkerJobService {
                 jr.getScheduledAt(),
                 jr.getBudgetFrom(),
                 jr.getBudgetTo(),
-                jr.getStatus() != null ? jr.getStatus().name() : null
+                jr.getStatus() != null ? jr.getStatus().name() : null,
+                jr.getPhotos()
         );
     }
 
