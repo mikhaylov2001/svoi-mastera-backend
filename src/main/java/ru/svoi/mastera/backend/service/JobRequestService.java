@@ -55,10 +55,9 @@ public class JobRequestService {
         jobRequest.setCity(dto.getCity());
         jobRequest.setAddressText(dto.getAddressText());
         jobRequest.setScheduledAt(dto.getScheduledAt());
-        // если в entity budgetFrom/budgetTo - BigDecimal, тут нужно конвертнуть
-
         jobRequest.setBudgetFrom(dto.getBudgetFrom());
         jobRequest.setBudgetTo(dto.getBudgetTo());
+        jobRequest.setPhotos(dto.getPhotos()); // ✅ ДОБАВЛЕНО: сохраняем фото
         jobRequest.setStatus(JobRequestStatus.OPEN);
         return jobRequest;
     }
@@ -75,7 +74,8 @@ public class JobRequestService {
                 jr.getScheduledAt(),
                 jr.getBudgetFrom(),
                 jr.getBudgetTo(),
-                jr.getStatus() != null ? jr.getStatus().name() : null
+                jr.getStatus() != null ? jr.getStatus().name() : null,
+                jr.getPhotos() // ✅ ИСПРАВЛЕНО: передаём напрямую photos
         );
     }
 

@@ -19,5 +19,6 @@ public class CreateJobRequestDto {
     private Instant scheduledAt;
     private BigDecimal budgetFrom;
     private BigDecimal budgetTo;
+    private String[] photos;
 
 }

@@ -66,4 +66,7 @@ public class JobRequest extends BaseEntity {
     @JoinColumn(name = "selected_offer_id")
     private JobOffer selectedOffer;
 
+    @Column(name = "photos", columnDefinition = "TEXT[]")
+    private String[] photos;
+
 }
