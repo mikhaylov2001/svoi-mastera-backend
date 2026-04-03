@@ -10,6 +10,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -66,6 +68,7 @@ public class JobRequest extends BaseEntity {
     @JoinColumn(name = "selected_offer_id")
     private JobOffer selectedOffer;
 
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "photos", columnDefinition = "TEXT[]")
     private String[] photos;
 
