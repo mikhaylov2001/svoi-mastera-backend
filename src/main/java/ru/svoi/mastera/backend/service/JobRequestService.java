@@ -63,6 +63,12 @@ public class JobRequestService {
     }
 
     private JobRequestDto toDto(JobRequest jr) {
+        UUID customerId = null;
+        String customerName = null;
+        if (jr.getCustomer() != null) {
+            customerId = jr.getCustomer().getUser() != null ? jr.getCustomer().getUser().getId() : null;
+            customerName = jr.getCustomer().getDisplayName();
+        }
         return new JobRequestDto(
                 jr.getId(),
                 jr.getCategory().getId(),
@@ -75,7 +81,9 @@ public class JobRequestService {
                 jr.getBudgetFrom(),
                 jr.getBudgetTo(),
                 jr.getStatus() != null ? jr.getStatus().name() : null,
-                jr.getPhotos() // ✅ ИСПРАВЛЕНО: передаём напрямую photos
+                jr.getPhotos(),
+                customerId,
+                customerName
         );
     }
 
