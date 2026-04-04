@@ -25,6 +25,8 @@ public class JobRequestDto {
     private BigDecimal budgetTo;
     private String status;
     private String[] photos;
+    private UUID customerId;
+    private String customerName;
 
 
 }

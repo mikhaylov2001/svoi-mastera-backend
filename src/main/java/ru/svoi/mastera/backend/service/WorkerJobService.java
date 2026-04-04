@@ -55,21 +55,27 @@ public class WorkerJobService {
         if (jobRequest.getStatus() != JobRequestStatus.OPEN) {
             throw new RuntimeException("Job request is not open");
         }
-            JobOffer offer = new JobOffer();
-            offer.setJobRequest(jobRequest);
-            offer.setWorker(worker);
-            offer.setMessage(dto.getMessage());
-            offer.setPrice(dto.getPrice());
-            offer.setEstimatedDays(dto.getEstimatedDays());
-            offer.setStatus(JobOfferStatus.CREATED);
+        JobOffer offer = new JobOffer();
+        offer.setJobRequest(jobRequest);
+        offer.setWorker(worker);
+        offer.setMessage(dto.getMessage());
+        offer.setPrice(dto.getPrice());
+        offer.setEstimatedDays(dto.getEstimatedDays());
+        offer.setStatus(JobOfferStatus.CREATED);
 
-            offer = jobOfferRepository.save(offer);
+        offer = jobOfferRepository.save(offer);
 
-            return toJobOfferDto(offer);
+        return toJobOfferDto(offer);
 
     }
 
     private JobRequestDto toJobRequestDto(JobRequest jr) {
+        UUID customerId = null;
+        String customerName = null;
+        if (jr.getCustomer() != null) {
+            customerId = jr.getCustomer().getUser() != null ? jr.getCustomer().getUser().getId() : null;
+            customerName = jr.getCustomer().getDisplayName();
+        }
         return new JobRequestDto(
                 jr.getId(),
                 jr.getCategory().getId(),
@@ -82,7 +88,9 @@ public class WorkerJobService {
                 jr.getBudgetFrom(),
                 jr.getBudgetTo(),
                 jr.getStatus() != null ? jr.getStatus().name() : null,
-                jr.getPhotos()
+                jr.getPhotos(),
+                customerId,
+                customerName
         );
     }
 
