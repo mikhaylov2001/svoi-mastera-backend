@@ -27,6 +27,5 @@ public class JobRequestDto {
     private String[] photos;
     private UUID customerId;
     private String customerName;
-
-
-}
+    private String customerLastName;
+    private String customerAvatar;}

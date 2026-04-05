@@ -81,7 +81,10 @@ public class PublicCustomerService {
     private JobRequestDto toDto(JobRequest jr) {
         UUID custId = jr.getCustomer() != null && jr.getCustomer().getUser() != null
                 ? jr.getCustomer().getUser().getId() : null;
-        String custName = jr.getCustomer() != null ? jr.getCustomer().getDisplayName() : null;
+        String custName     = jr.getCustomer() != null ? jr.getCustomer().getDisplayName() : null;
+        String custLastName = jr.getCustomer() != null ? jr.getCustomer().getLastName() : null;
+        String custAvatar   = jr.getCustomer() != null && jr.getCustomer().getUser() != null
+                ? jr.getCustomer().getUser().getAvatarUrl() : null;
 
         return new JobRequestDto(
                 jr.getId(),
@@ -97,7 +100,9 @@ public class PublicCustomerService {
                 jr.getStatus() != null ? jr.getStatus().name() : null,
                 jr.getPhotos(),
                 custId,
-                custName
+                custName,
+                custLastName,
+                custAvatar
         );
     }
 }

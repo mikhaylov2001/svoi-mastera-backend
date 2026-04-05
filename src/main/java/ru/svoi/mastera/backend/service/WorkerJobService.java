@@ -72,9 +72,13 @@ public class WorkerJobService {
     private JobRequestDto toJobRequestDto(JobRequest jr) {
         UUID customerId = null;
         String customerName = null;
+        String customerLastName = null;
+        String customerAvatar = null;
         if (jr.getCustomer() != null) {
             customerId = jr.getCustomer().getUser() != null ? jr.getCustomer().getUser().getId() : null;
             customerName = jr.getCustomer().getDisplayName();
+            customerLastName = jr.getCustomer().getLastName();
+            customerAvatar = jr.getCustomer().getUser() != null ? jr.getCustomer().getUser().getAvatarUrl() : null;
         }
         return new JobRequestDto(
                 jr.getId(),
@@ -90,7 +94,9 @@ public class WorkerJobService {
                 jr.getStatus() != null ? jr.getStatus().name() : null,
                 jr.getPhotos(),
                 customerId,
-                customerName
+                customerName,
+                customerLastName,
+                customerAvatar
         );
     }
 
