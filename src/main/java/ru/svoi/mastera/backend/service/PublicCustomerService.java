@@ -3,13 +3,16 @@ package ru.svoi.mastera.backend.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.svoi.mastera.backend.dto.CustomerReviewDto;
 import ru.svoi.mastera.backend.dto.JobRequestDto;
 import ru.svoi.mastera.backend.dto.PublicCustomerProfileDto;
 import ru.svoi.mastera.backend.entity.CustomerProfile;
 import ru.svoi.mastera.backend.entity.JobRequest;
+import ru.svoi.mastera.backend.entity.Review;
 import ru.svoi.mastera.backend.entity.enams.JobRequestStatus;
 import ru.svoi.mastera.backend.repository.CustomerProfileRepository;
 import ru.svoi.mastera.backend.repository.JobRequestRepository;
+import ru.svoi.mastera.backend.repository.ReviewRepository;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +24,7 @@ public class PublicCustomerService {
 
     private final CustomerProfileRepository customerProfileRepository;
     private final JobRequestRepository jobRequestRepository;
+    private final ReviewRepository reviewRepository;
 
     @Transactional(readOnly = true)
     public PublicCustomerProfileDto getProfile(UUID userId) {
@@ -55,6 +59,22 @@ public class PublicCustomerService {
                 .stream()
                 .filter(r -> r.getStatus() == JobRequestStatus.OPEN)
                 .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CustomerReviewDto> getReviews(UUID userId) {
+        return reviewRepository.findAllByAuthorUserId(userId)
+                .stream()
+                .map(r -> new CustomerReviewDto(
+                        r.getId(),
+                        r.getRating(),
+                        r.getText(),
+                        r.getTargetWorker() != null ? r.getTargetWorker().getDisplayName() : null,
+                        r.getTargetWorker() != null && r.getTargetWorker().getUser() != null
+                                ? r.getTargetWorker().getUser().getAvatarUrl() : null,
+                        r.getCreatedAt()
+                ))
                 .collect(Collectors.toList());
     }
 
