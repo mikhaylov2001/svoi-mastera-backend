@@ -23,9 +23,9 @@ public class PublicCustomerService {
     private final JobRequestRepository jobRequestRepository;
 
     @Transactional(readOnly = true)
-    public PublicCustomerProfileDto getProfile(UUID customerId) {
-        CustomerProfile profile = customerProfileRepository.findById(customerId)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+    public PublicCustomerProfileDto getProfile(UUID userId) {
+        CustomerProfile profile = customerProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Customer not found for userId: " + userId));
 
         List<JobRequest> requests = jobRequestRepository.findAllByCustomerOrderByCreatedAtDesc(profile);
 
@@ -34,7 +34,7 @@ public class PublicCustomerService {
         int open      = (int) requests.stream().filter(r -> r.getStatus() == JobRequestStatus.OPEN).count();
 
         return new PublicCustomerProfileDto(
-                profile.getId(),
+                userId, // возвращаем userId — именно его фронт использует для навигации
                 profile.getDisplayName(),
                 profile.getLastName(),
                 profile.getCity(),
@@ -47,9 +47,9 @@ public class PublicCustomerService {
     }
 
     @Transactional(readOnly = true)
-    public List<JobRequestDto> getRequests(UUID customerId) {
-        CustomerProfile profile = customerProfileRepository.findById(customerId)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+    public List<JobRequestDto> getRequests(UUID userId) {
+        CustomerProfile profile = customerProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Customer not found for userId: " + userId));
 
         return jobRequestRepository.findAllByCustomerOrderByCreatedAtDesc(profile)
                 .stream()
