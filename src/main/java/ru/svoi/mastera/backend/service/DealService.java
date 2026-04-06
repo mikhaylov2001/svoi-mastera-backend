@@ -11,6 +11,7 @@ import ru.svoi.mastera.backend.entity.enams.JobOfferStatus;
 import ru.svoi.mastera.backend.entity.enams.JobRequestStatus;
 import ru.svoi.mastera.backend.repository.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,7 @@ public class DealService {
     private final CustomerProfileRepository customerProfileRepository;
     private final WorkerProfileRepository workerProfileRepository;
     private final ReviewRepository reviewRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public DealDto acceptOffer(UUID customerUserId, UUID jobRequestId, UUID offerId) {
@@ -63,6 +65,17 @@ public class DealService {
         deal.setWorkerConfirmed(false);
 
         deal = dealRepository.save(deal);
+
+        // 🔔 Уведомление мастеру: заказчик принял отклик
+        try {
+            UUID workerUserId = offer.getWorker().getUser().getId();
+            String customerName = jobRequest.getCustomer().getDisplayName();
+            String customerLastName = jobRequest.getCustomer().getLastName();
+            String jobTitle = jobRequest.getTitle();
+            String price = offer.getPrice() != null ? offer.getPrice().toPlainString() : "договорная";
+            notificationService.notifyOfferAccepted(workerUserId, customerName, customerLastName, jobTitle, price, deal.getId());
+        } catch (Exception ignored) {}
+
         return toDto(deal);
     }
 
@@ -132,6 +145,33 @@ public class DealService {
         }
 
         deal = dealRepository.save(deal);
+
+        // 🔔 Уведомления при подтверждении
+        try {
+            String jobTitle = deal.getJobRequest().getTitle();
+            boolean isCustomer = userId.equals(deal.getCustomer().getUser().getId());
+
+            if (deal.getStatus() == DealStatus.COMPLETED) {
+                // Обе стороны подтвердили — сделка завершена
+                notificationService.notifyDealCompleted(
+                        deal.getCustomer().getUser().getId(),
+                        deal.getWorker().getUser().getId(),
+                        deal.getCustomer().getDisplayName(),
+                        deal.getWorker().getDisplayName(),
+                        jobTitle
+                );
+            } else {
+                // Одна сторона подтвердила — уведомляем другую
+                UUID targetId = isCustomer
+                        ? deal.getWorker().getUser().getId()
+                        : deal.getCustomer().getUser().getId();
+                String confirmerName = isCustomer
+                        ? deal.getCustomer().getDisplayName()
+                        : deal.getWorker().getDisplayName();
+                notificationService.notifyDealConfirmed(targetId, confirmerName, jobTitle, deal.getId());
+            }
+        } catch (Exception ignored) {}
+
         return toDto(deal);
     }
 

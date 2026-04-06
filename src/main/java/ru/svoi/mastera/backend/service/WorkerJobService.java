@@ -28,6 +28,7 @@ public class WorkerJobService {
     private final JobOfferRepository jobOfferRepository;
     private final UserRepository userRepository;
     private final WorkerProfileRepository workerProfileRepository;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<JobRequestDto> listOpenJobRequests() {
@@ -64,6 +65,13 @@ public class WorkerJobService {
         offer.setStatus(JobOfferStatus.CREATED);
 
         offer = jobOfferRepository.save(offer);
+
+        // 🔔 Уведомление заказчику: мастер откликнулся
+        try {
+            UUID customerUserId = jobRequest.getCustomer().getUser().getId();
+            String workerName = worker.getDisplayName();
+            notificationService.notifyNewOffer(customerUserId, workerName, jobRequest.getTitle(), jobRequest.getId());
+        } catch (Exception ignored) {}
 
         return toJobOfferDto(offer);
 
