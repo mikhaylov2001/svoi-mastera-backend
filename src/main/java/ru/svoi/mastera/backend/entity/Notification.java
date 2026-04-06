@@ -28,6 +28,6 @@ public class Notification extends BaseEntity {
     @Column(length = 500)
     private String link;
 
-    @Column(nullable = false)
-    private boolean isRead = false;
+    @Column(name = "is_read", nullable = false)
+    private boolean read = false;
 }
