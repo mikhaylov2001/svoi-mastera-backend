@@ -24,6 +24,7 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final JobRequestRepository jobRequestRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public MessageDto send(UUID senderId, SendMessageDto dto) {
@@ -48,6 +49,13 @@ public class MessageService {
         }
 
         msg = messageRepository.save(msg);
+
+        // 🔔 Уведомление получателю о новом сообщении
+        try {
+            String senderName = getDisplayName(sender);
+            notificationService.notifyNewMessage(dto.getReceiverId(), senderName, dto.getText());
+        } catch (Exception ignored) {}
+
         return toDto(msg);
     }
 
