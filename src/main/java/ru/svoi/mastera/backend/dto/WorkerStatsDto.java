@@ -4,7 +4,11 @@ import java.time.Instant;
 
 public record WorkerStatsDto(
         Double averageRating,
-        Long reviewsCount,           // ✅ ИСПРАВЛЕНО: порядок
+        Long reviewsCount,
         Long completedWorksCount,
-        Instant registeredAt         // ✅ ИСПРАВЛЕНО: порядок
+        Instant registeredAt,
+        String displayName,
+        String lastName,
+        String avatarUrl,
+        String city       // ✅ ИСПРАВЛЕНО: порядок
 ) {}

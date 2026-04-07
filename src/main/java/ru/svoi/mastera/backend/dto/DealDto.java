@@ -30,5 +30,7 @@ public class DealDto {
     private Instant startedAt;
     private Instant completedAt;
     private boolean hasReview;
-    private String[] photos; // фото из заявки
+    private String[] photos;
+    private String workerAvatar;
+    private String workerLastName;
 }

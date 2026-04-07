@@ -84,7 +84,13 @@ public class ReviewService {
         Instant registeredAt = worker.getCreatedAt();
 
         if (reviews.isEmpty()) {
-            return new WorkerStatsDto(0.0, 0L, completedWorks, registeredAt);
+            return new WorkerStatsDto(
+                    0.0, 0L, completedWorks, registeredAt,
+                    worker.getDisplayName(),
+                    worker.getLastName(),
+                    worker.getUser() != null ? worker.getUser().getAvatarUrl() : null,
+                    worker.getCity()
+            );
         }
 
         // Вычисляем средний рейтинг
@@ -96,7 +102,13 @@ public class ReviewService {
         // Округляем до 1 знака после запятой
         averageRating = Math.round(averageRating * 10.0) / 10.0;
 
-        return new WorkerStatsDto(averageRating, (long) reviews.size(), completedWorks, registeredAt);
+        return new WorkerStatsDto(
+                averageRating, (long) reviews.size(), completedWorks, registeredAt,
+                worker.getDisplayName(),
+                worker.getLastName(),
+                worker.getUser() != null ? worker.getUser().getAvatarUrl() : null,
+                worker.getCity()
+        );
     }
 
     private ReviewDto toDto(Review review) {

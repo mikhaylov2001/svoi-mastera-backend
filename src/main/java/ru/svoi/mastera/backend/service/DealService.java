@@ -183,14 +183,16 @@ public class DealService {
 
     private DealDto toDto(Deal deal) {
         String customerName = deal.getCustomer().getDisplayName();
-        String workerName = deal.getWorker().getDisplayName();
+        String workerName   = deal.getWorker().getDisplayName();
+        String workerLastName = deal.getWorker().getLastName();
+        String workerAvatar   = deal.getWorker().getUser() != null
+                ? deal.getWorker().getUser().getAvatarUrl() : null;
         String title = deal.getJobRequest().getTitle();
         String description = deal.getJobRequest().getDescription();
         String category = deal.getJobRequest().getCategory() != null
                 ? deal.getJobRequest().getCategory().getName() : null;
         String[] photos = deal.getJobRequest().getPhotos();
 
-        // Проверяем есть ли отзыв для этой сделки
         boolean hasReview = reviewRepository.existsByDealId(deal.getId());
 
         return new DealDto(
@@ -212,7 +214,9 @@ public class DealService {
                 deal.getStartedAt(),
                 deal.getCompletedAt(),
                 hasReview,
-                photos
+                photos,
+                workerAvatar,
+                workerLastName
         );
     }
 
