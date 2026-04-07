@@ -255,7 +255,8 @@ public class DealService {
                 categoryName,
                 deal.getAgreedPrice(),
                 deal.getCompletedAt(),
-                customerFirstName
+                customerFirstName,
+                deal.getJobRequest().getPhotos()
         );
     }
 

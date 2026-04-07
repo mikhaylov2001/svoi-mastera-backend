@@ -11,5 +11,6 @@ public record WorkerCompletedWorkDto(
         String categoryName,
         BigDecimal price,
         Instant completedAt,
-        String customerName  // Без фамилии для приватности
+        String customerName,
+        String[] photos // Без фамилии для приватности
 ) {}
