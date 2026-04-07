@@ -188,6 +188,7 @@ public class DealService {
         String description = deal.getJobRequest().getDescription();
         String category = deal.getJobRequest().getCategory() != null
                 ? deal.getJobRequest().getCategory().getName() : null;
+        String[] photos = deal.getJobRequest().getPhotos();
 
         // Проверяем есть ли отзыв для этой сделки
         boolean hasReview = reviewRepository.existsByDealId(deal.getId());
@@ -210,7 +211,8 @@ public class DealService {
                 deal.getCreatedAt(),
                 deal.getStartedAt(),
                 deal.getCompletedAt(),
-                hasReview
+                hasReview,
+                photos
         );
     }
 
