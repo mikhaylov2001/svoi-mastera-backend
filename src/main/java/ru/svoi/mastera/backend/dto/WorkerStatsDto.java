@@ -10,5 +10,5 @@ public record WorkerStatsDto(
         String displayName,
         String lastName,
         String avatarUrl,
-        String city       // ✅ ИСПРАВЛЕНО: порядок
+        String city     // ✅ ИСПРАВЛЕНО: порядок
 ) {}
