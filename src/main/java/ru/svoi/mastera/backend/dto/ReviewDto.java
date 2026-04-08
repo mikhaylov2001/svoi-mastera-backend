@@ -9,6 +9,8 @@ public record ReviewDto(
         UUID dealId,
         UUID authorUserId,
         String authorName,
+        String authorLastName,
+        String authorAvatarUrl,
         UUID targetWorkerUserId,
         Integer rating,
         String text,

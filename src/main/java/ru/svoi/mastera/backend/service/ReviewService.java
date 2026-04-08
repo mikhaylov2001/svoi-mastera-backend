@@ -49,7 +49,8 @@ public class ReviewService {
         review.setTargetWorker(deal.getWorker());
         review.setRating(dto.rating());
         review.setText(dto.text());
-        // status оставляем MODERATION по умолчанию
+        // Автоматически одобряем отзыв
+        review.setStatus(ru.svoi.mastera.backend.entity.enams.ReviewStatus.APPROVED);
 
         review = reviewRepository.save(review);
         return toDto(review);
@@ -113,11 +114,18 @@ public class ReviewService {
 
     private ReviewDto toDto(Review review) {
         String authorName = "Клиент";
+        String authorLastName = "";
+        String authorAvatarUrl = null;
         if (review.getAuthorUser() != null) {
+            authorAvatarUrl = review.getAuthorUser().getAvatarUrl();
             if (review.getAuthorUser().getCustomerProfile() != null) {
                 authorName = review.getAuthorUser().getCustomerProfile().getDisplayName();
+                authorLastName = review.getAuthorUser().getCustomerProfile().getLastName() != null
+                        ? review.getAuthorUser().getCustomerProfile().getLastName() : "";
             } else if (review.getAuthorUser().getWorkerProfile() != null) {
                 authorName = review.getAuthorUser().getWorkerProfile().getDisplayName();
+                authorLastName = review.getAuthorUser().getWorkerProfile().getLastName() != null
+                        ? review.getAuthorUser().getWorkerProfile().getLastName() : "";
             }
         }
 
@@ -147,6 +155,8 @@ public class ReviewService {
                 review.getDeal().getId(),
                 review.getAuthorUser().getId(),
                 authorName,
+                authorLastName,
+                authorAvatarUrl,
                 review.getTargetWorker().getUser().getId(),
                 review.getRating(),
                 review.getText(),
