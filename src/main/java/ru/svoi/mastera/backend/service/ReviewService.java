@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import ru.svoi.mastera.backend.repository.CustomerProfileRepository;
+
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
@@ -27,7 +29,9 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final DealRepository dealRepository;
     private final WorkerProfileRepository workerProfileRepository;
+    private final CustomerProfileRepository customerProfileRepository;
 
+    // Заказчик оставляет отзыв мастеру
     @Transactional
     public ReviewDto create(UUID authorUserId, UUID dealId, ReviewCreateDto dto) {
         Deal deal = dealRepository.findById(dealId)
@@ -49,7 +53,35 @@ public class ReviewService {
         review.setTargetWorker(deal.getWorker());
         review.setRating(dto.rating());
         review.setText(dto.text());
-        // Автоматически одобряем отзыв
+        review.setStatus(ru.svoi.mastera.backend.entity.enams.ReviewStatus.APPROVED);
+
+        review = reviewRepository.save(review);
+        return toDto(review);
+    }
+
+    // Мастер оставляет отзыв заказчику
+    @Transactional
+    public ReviewDto createByWorker(UUID authorUserId, UUID dealId, ReviewCreateDto dto) {
+        Deal deal = dealRepository.findById(dealId)
+                .orElseThrow(() -> new RuntimeException("Deal not found"));
+
+        User authorUser = deal.getWorker().getUser();
+
+        if (!authorUser.getId().equals(authorUserId)) {
+            throw new RuntimeException("You are not the worker of this deal");
+        }
+
+        if (deal.getStatus() != DealStatus.COMPLETED) {
+            throw new RuntimeException("Deal must be completed before review");
+        }
+
+        Review review = new Review();
+        review.setDeal(deal);
+        review.setAuthorUser(authorUser);
+        review.setTargetWorker(null);
+        review.setTargetCustomer(deal.getCustomer());
+        review.setRating(dto.rating());
+        review.setText(dto.text());
         review.setStatus(ru.svoi.mastera.backend.entity.enams.ReviewStatus.APPROVED);
 
         review = reviewRepository.save(review);
@@ -62,6 +94,17 @@ public class ReviewService {
                 .orElseThrow(() -> new RuntimeException("Worker profile not found"));
 
         List<Review> reviews = reviewRepository.findAllByTargetWorker(worker);
+        return reviews.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReviewDto> listByCustomer(UUID customerUserId) {
+        CustomerProfile customer = customerProfileRepository.findByUserId(customerUserId)
+                .orElseThrow(() -> new RuntimeException("Customer profile not found"));
+
+        List<Review> reviews = reviewRepository.findAllByTargetCustomer(customer);
         return reviews.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
@@ -157,7 +200,8 @@ public class ReviewService {
                 authorName,
                 authorLastName,
                 authorAvatarUrl,
-                review.getTargetWorker().getUser().getId(),
+                review.getTargetWorker() != null ? review.getTargetWorker().getUser().getId() : null,
+                review.getTargetCustomer() != null ? review.getTargetCustomer().getUser().getId() : null,
                 review.getRating(),
                 review.getText(),
                 review.getStatus() != null ? review.getStatus().name() : null,

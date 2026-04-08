@@ -32,6 +32,10 @@ public class Review extends BaseEntity {
     @JoinColumn(name = "target_worker_id", nullable = false)
     private WorkerProfile targetWorker;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_customer_id", nullable = false)
+    private CustomerProfile targetCustomer;
+
     @Column(nullable = false)
     private Integer rating;
 

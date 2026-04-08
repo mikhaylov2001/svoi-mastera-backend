@@ -16,7 +16,7 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    // создать отзыв по сделке
+    // создать отзыв по сделке (заказчик → мастеру)
     @PostMapping("/deals/{dealId}/reviews")
     public ReviewDto create(@RequestHeader("X-User-Id") UUID userId,
                             @PathVariable UUID dealId,
@@ -24,9 +24,23 @@ public class ReviewController {
         return reviewService.create(userId, dealId, body);
     }
 
-    // список отзывов по мастеру (workerUserId = id User мастера)
+    // создать отзыв по сделке (мастер → заказчику)
+    @PostMapping("/deals/{dealId}/reviews/worker")
+    public ReviewDto createByWorker(@RequestHeader("X-User-Id") UUID userId,
+                                    @PathVariable UUID dealId,
+                                    @RequestBody ReviewCreateDto body) {
+        return reviewService.createByWorker(userId, dealId, body);
+    }
+
+    // список отзывов по мастеру
     @GetMapping("/workers/{workerUserId}/reviews")
     public List<ReviewDto> listByWorker(@PathVariable UUID workerUserId) {
         return reviewService.listByWorker(workerUserId);
+    }
+
+    // список отзывов по заказчику
+    @GetMapping("/customers/{customerUserId}/reviews")
+    public List<ReviewDto> listByCustomer(@PathVariable UUID customerUserId) {
+        return reviewService.listByCustomer(customerUserId);
     }
 }

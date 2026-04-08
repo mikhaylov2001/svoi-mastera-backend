@@ -12,6 +12,7 @@ public record ReviewDto(
         String authorLastName,
         String authorAvatarUrl,
         UUID targetWorkerUserId,
+        UUID targetCustomerUserId,
         Integer rating,
         String text,
         String status,
