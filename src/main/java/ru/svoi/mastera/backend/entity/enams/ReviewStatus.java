@@ -4,5 +4,5 @@ public enum ReviewStatus {
     MODERATION,
     PUBLISHED,
     HIDDEN,
-    DELETED
+    APPROVED, DELETED
 }
