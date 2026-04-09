@@ -57,7 +57,6 @@ public class PublicCustomerService {
 
         return jobRequestRepository.findAllByCustomerOrderByCreatedAtDesc(profile)
                 .stream()
-                .filter(r -> r.getStatus() == JobRequestStatus.OPEN)
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
