@@ -29,18 +29,6 @@ public class CustomerProfileController {
         return toDto(profile);
     }
 
-    // Публичный профиль заказчика по userId
-    @GetMapping("/customers/{customerId}/profile")
-    public CustomerProfileDto publicProfile(@PathVariable UUID customerId) {
-        User user = userRepository.findById(customerId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        CustomerProfile profile = customerProfileRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Customer profile not found"));
-
-        return toDto(profile);
-    }
-
     private CustomerProfileDto toDto(CustomerProfile profile) {
         String avatarUrl = profile.getUser() != null ? profile.getUser().getAvatarUrl() : null;
         return new CustomerProfileDto(
