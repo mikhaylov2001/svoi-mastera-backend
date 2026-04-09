@@ -29,11 +29,11 @@ public class Review extends BaseEntity {
     private User authorUser;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "target_worker_id", nullable = false)
+    @JoinColumn(name = "target_worker_id", nullable = true)
     private WorkerProfile targetWorker;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "target_customer_id", nullable = false)
+    @JoinColumn(name = "target_customer_id", nullable = true)
     private CustomerProfile targetCustomer;
 
     @Column(nullable = false)
