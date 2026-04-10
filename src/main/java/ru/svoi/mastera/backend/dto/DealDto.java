@@ -33,4 +33,7 @@ public class DealDto {
     private String[] photos;
     private String workerAvatar;
     private String workerLastName;
+    private String customerAvatar;
+    private String customerLastName;
+
 }

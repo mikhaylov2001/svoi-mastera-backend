@@ -183,6 +183,9 @@ public class DealService {
 
     private DealDto toDto(Deal deal) {
         String customerName = deal.getCustomer().getDisplayName();
+        String customerLastName = deal.getCustomer().getLastName();
+        String customerAvatar = deal.getCustomer().getUser() != null
+                ? deal.getCustomer().getUser().getAvatarUrl() : null;
         String workerName   = deal.getWorker().getDisplayName();
         String workerLastName = deal.getWorker().getLastName();
         String workerAvatar   = deal.getWorker().getUser() != null
@@ -216,7 +219,9 @@ public class DealService {
                 hasReview,
                 photos,
                 workerAvatar,
-                workerLastName
+                workerLastName,
+                customerAvatar,
+                customerLastName
         );
     }
 
