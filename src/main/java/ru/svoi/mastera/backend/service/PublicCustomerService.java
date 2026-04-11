@@ -13,6 +13,7 @@ import ru.svoi.mastera.backend.entity.enams.JobRequestStatus;
 import ru.svoi.mastera.backend.repository.CustomerProfileRepository;
 import ru.svoi.mastera.backend.repository.JobRequestRepository;
 import ru.svoi.mastera.backend.repository.ReviewRepository;
+import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +26,7 @@ public class PublicCustomerService {
     private final CustomerProfileRepository customerProfileRepository;
     private final JobRequestRepository jobRequestRepository;
     private final ReviewRepository reviewRepository;
+    private final WorkerProfileRepository workerProfileRepository;
 
     @Transactional(readOnly = true)
     public PublicCustomerProfileDto getProfile(UUID userId) {
@@ -63,17 +65,29 @@ public class PublicCustomerService {
 
     @Transactional(readOnly = true)
     public List<CustomerReviewDto> getReviews(UUID userId) {
-        return reviewRepository.findAllByAuthorUserId(userId)
+        CustomerProfile profile = customerProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Customer not found for userId: " + userId));
+
+        return reviewRepository.findAllByTargetCustomerOrderByCreatedAtDesc(profile)
                 .stream()
-                .map(r -> new CustomerReviewDto(
-                        r.getId(),
-                        r.getRating(),
-                        r.getText(),
-                        r.getTargetWorker() != null ? r.getTargetWorker().getDisplayName() : null,
-                        r.getTargetWorker() != null && r.getTargetWorker().getUser() != null
-                                ? r.getTargetWorker().getUser().getAvatarUrl() : null,
-                        r.getCreatedAt()
-                ))
+                .map(r -> {
+                    String authorName = null;
+                    String authorAvatar = null;
+                    if (r.getAuthorUser() != null) {
+                        authorAvatar = r.getAuthorUser().getAvatarUrl();
+                        authorName = workerProfileRepository.findByUserId(r.getAuthorUser().getId())
+                                .map(wp -> wp.getDisplayName())
+                                .orElse(null);
+                    }
+                    return new CustomerReviewDto(
+                            r.getId(),
+                            r.getRating(),
+                            r.getText(),
+                            authorName,
+                            authorAvatar,
+                            r.getCreatedAt()
+                    );
+                })
                 .collect(Collectors.toList());
     }
 
