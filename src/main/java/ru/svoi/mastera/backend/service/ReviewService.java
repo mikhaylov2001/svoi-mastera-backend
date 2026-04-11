@@ -47,6 +47,10 @@ public class ReviewService {
             throw new RuntimeException("Deal must be completed before review");
         }
 
+        if (reviewRepository.existsCustomerReviewByDealId(dealId)) {
+            throw new RuntimeException("Review for this deal already exists");
+        }
+
         Review review = new Review();
         review.setDeal(deal);
         review.setAuthorUser(authorUser);
@@ -73,6 +77,10 @@ public class ReviewService {
 
         if (deal.getStatus() != DealStatus.COMPLETED) {
             throw new RuntimeException("Deal must be completed before review");
+        }
+
+        if (reviewRepository.existsWorkerReviewByDealId(dealId)) {
+            throw new RuntimeException("Review for this deal already exists");
         }
 
         Review review = new Review();

@@ -196,7 +196,8 @@ public class DealService {
                 ? deal.getJobRequest().getCategory().getName() : null;
         String[] photos = deal.getJobRequest().getPhotos();
 
-        boolean hasReview = reviewRepository.existsByDealId(deal.getId());
+        boolean hasReview = reviewRepository.existsCustomerReviewByDealId(deal.getId());
+        boolean hasWorkerReview = reviewRepository.existsWorkerReviewByDealId(deal.getId());
 
         return new DealDto(
                 deal.getId(),
@@ -217,6 +218,7 @@ public class DealService {
                 deal.getStartedAt(),
                 deal.getCompletedAt(),
                 hasReview,
+                hasWorkerReview,
                 photos,
                 workerAvatar,
                 workerLastName,

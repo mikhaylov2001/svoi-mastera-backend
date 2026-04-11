@@ -14,6 +14,15 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
     List<Review> findAllByTargetWorker(WorkerProfile targetWorker);
     boolean existsByDealId(UUID dealId);
 
+    // Существует ли отзыв заказчика → мастеру по сделке
+    // (targetWorker IS NOT NULL означает что это отзыв мастеру)
+    @Query("SELECT COUNT(r) > 0 FROM Review r WHERE r.deal.id = :dealId AND r.targetWorker IS NOT NULL")
+    boolean existsCustomerReviewByDealId(UUID dealId);
+
+    // Существует ли отзыв мастера → заказчику по сделке
+    @Query("SELECT COUNT(r) > 0 FROM Review r WHERE r.deal.id = :dealId AND r.targetCustomer IS NOT NULL")
+    boolean existsWorkerReviewByDealId(UUID dealId);
+
     @Query("SELECT r FROM Review r WHERE r.authorUser.id = :userId ORDER BY r.createdAt DESC")
     List<Review> findAllByAuthorUserId(UUID userId);
 
