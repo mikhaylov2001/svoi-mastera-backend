@@ -11,6 +11,7 @@ import java.util.UUID;
 
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
+    @Query("SELECT r FROM Review r LEFT JOIN FETCH r.authorUser u LEFT JOIN FETCH u.workerProfile LEFT JOIN FETCH u.customerProfile WHERE r.targetWorker = :targetWorker")
     List<Review> findAllByTargetWorker(WorkerProfile targetWorker);
     boolean existsByDealId(UUID dealId);
 
@@ -25,6 +26,7 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     List<Review> findAllByTargetCustomerOrderByCreatedAtDesc(CustomerProfile targetCustomer);
 
+    @Query("SELECT r FROM Review r LEFT JOIN FETCH r.authorUser u LEFT JOIN FETCH u.workerProfile LEFT JOIN FETCH u.customerProfile WHERE r.targetCustomer = :targetCustomer")
     List<Review> findAllByTargetCustomer(CustomerProfile targetCustomer);
 
 
