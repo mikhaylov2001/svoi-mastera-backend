@@ -38,10 +38,7 @@ public class ReviewController {
         return reviewService.listByWorker(workerUserId);
     }
 
-    @GetMapping("/customers/{customerUserId}/reviews")
-    public List<ReviewDto> listByCustomer(@PathVariable UUID customerUserId) {
-        return reviewService.listByCustomer(customerUserId);
-    }
+
 
 
 
