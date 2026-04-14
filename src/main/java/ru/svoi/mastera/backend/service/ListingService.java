@@ -71,6 +71,19 @@ public class ListingService {
         listingRepository.save(listing);
     }
 
+    @Transactional
+    public ListingDto restore(UUID workerUserId, UUID listingId) {
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new RuntimeException("Listing not found"));
+
+        if (!listing.getWorker().getUser().getId().equals(workerUserId)) {
+            throw new RuntimeException("Not your listing");
+        }
+
+        listing.setActive(true);
+        return toDto(listingRepository.save(listing));
+    }
+
     @Transactional(readOnly = true)
     public List<ListingDto> getByWorker(UUID workerUserId) {
         WorkerProfile worker = workerProfileRepository.findByUserId(workerUserId)

@@ -49,4 +49,11 @@ public class ListingController {
     public List<ListingDto> getAll() {
         return listingService.getAll();
     }
+
+    // Восстановить из архива
+    @PostMapping("/listings/{listingId}/restore")
+    public ListingDto restore(@RequestHeader("X-User-Id") UUID userId,
+                              @PathVariable UUID listingId) {
+        return listingService.restore(userId, listingId);
+    }
 }
