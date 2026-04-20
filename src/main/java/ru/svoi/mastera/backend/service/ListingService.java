@@ -98,6 +98,13 @@ public class ListingService {
                 .stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public ListingDto getById(UUID listingId) {
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new RuntimeException("Listing not found"));
+        return toDto(listing);
+    }
+
     private ListingDto toDto(Listing l) {
         String workerAvatar = l.getWorker().getUser() != null
                 ? l.getWorker().getUser().getAvatarUrl() : null;

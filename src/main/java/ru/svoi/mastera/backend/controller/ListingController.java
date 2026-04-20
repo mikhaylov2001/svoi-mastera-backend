@@ -50,6 +50,12 @@ public class ListingController {
         return listingService.getAll();
     }
 
+    // Одно объявление по ID
+    @GetMapping("/listings/{listingId}")
+    public ListingDto getById(@PathVariable UUID listingId) {
+        return listingService.getById(listingId);
+    }
+
     // Восстановить из архива
     @PostMapping("/listings/{listingId}/restore")
     public ListingDto restore(@RequestHeader("X-User-Id") UUID userId,
