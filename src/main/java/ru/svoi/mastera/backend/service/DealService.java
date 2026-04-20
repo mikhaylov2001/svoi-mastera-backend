@@ -29,6 +29,8 @@ public class DealService {
     private final WorkerProfileRepository workerProfileRepository;
     private final ReviewRepository reviewRepository;
     private final NotificationService notificationService;
+    private final ListingRepository listingRepository;
+    private final CategoryRepository categoryRepository;
 
     @Transactional
     public DealDto acceptOffer(UUID customerUserId, UUID jobRequestId, UUID offerId) {
@@ -74,6 +76,85 @@ public class DealService {
             String jobTitle = jobRequest.getTitle();
             String price = offer.getPrice() != null ? offer.getPrice().toPlainString() : "договорная";
             notificationService.notifyOfferAccepted(workerUserId, customerName, customerLastName, jobTitle, price, deal.getId());
+        } catch (Exception ignored) {}
+
+        return toDto(deal);
+    }
+
+    @Transactional
+    public DealDto acceptListing(UUID customerUserId, UUID listingId) {
+        User customerUser = userRepository.findById(customerUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        CustomerProfile customer = customerProfileRepository.findByUser(customerUser)
+                .orElseThrow(() -> new RuntimeException("Customer profile not found"));
+
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new RuntimeException("Listing not found"));
+
+        if (!listing.isActive()) {
+            throw new RuntimeException("Listing is not active");
+        }
+        if (listing.getWorker().getUser().getId().equals(customerUserId)) {
+            throw new RuntimeException("You cannot accept your own listing");
+        }
+
+        Category category = null;
+        if (listing.getCategory() != null && !listing.getCategory().isBlank()) {
+            category = categoryRepository.findByNameIgnoreCase(listing.getCategory()).orElse(null);
+        }
+        if (category == null) {
+            category = categoryRepository.findAllByActiveTrueOrderByNameAsc().stream().findFirst()
+                    .orElseThrow(() -> new RuntimeException("No categories found"));
+        }
+
+        JobRequest jobRequest = new JobRequest();
+        jobRequest.setCustomer(customer);
+        jobRequest.setCategory(category);
+        jobRequest.setTitle("Заявка по услуге: " + listing.getTitle());
+        jobRequest.setDescription(
+                (listing.getDescription() == null || listing.getDescription().isBlank())
+                        ? "Клиент принял вашу услугу из объявления."
+                        : listing.getDescription()
+        );
+        jobRequest.setCity("Йошкар-Ола");
+        if (listing.getPrice() != null) {
+            jobRequest.setBudgetTo(BigDecimal.valueOf(listing.getPrice()));
+        }
+        jobRequest.setPhotos(listing.getPhotos());
+        jobRequest.setStatus(JobRequestStatus.IN_PROGRESS);
+        jobRequest = jobRequestRepository.save(jobRequest);
+
+        JobOffer offer = new JobOffer();
+        offer.setJobRequest(jobRequest);
+        offer.setWorker(listing.getWorker());
+        offer.setMessage("Клиент принял работу по вашему объявлению");
+        offer.setPrice(BigDecimal.valueOf(listing.getPrice() != null ? listing.getPrice() : 0));
+        offer.setStatus(JobOfferStatus.ACCEPTED);
+        offer = jobOfferRepository.save(offer);
+
+        jobRequest.setSelectedOffer(offer);
+        jobRequestRepository.save(jobRequest);
+
+        Deal deal = new Deal();
+        deal.setJobRequest(jobRequest);
+        deal.setJobOffer(offer);
+        deal.setCustomer(customer);
+        deal.setWorker(listing.getWorker());
+        deal.setAgreedPrice(offer.getPrice());
+        deal.setStatus(DealStatus.IN_PROGRESS);
+        deal.setStartedAt(Instant.now());
+        // Клиент уже согласен на условия по объявлению.
+        deal.setCustomerConfirmed(true);
+        deal.setWorkerConfirmed(false);
+        deal = dealRepository.save(deal);
+
+        try {
+            notificationService.notifyDealConfirmed(
+                    listing.getWorker().getUser().getId(),
+                    customer.getDisplayName(),
+                    jobRequest.getTitle(),
+                    deal.getId()
+            );
         } catch (Exception ignored) {}
 
         return toDto(deal);

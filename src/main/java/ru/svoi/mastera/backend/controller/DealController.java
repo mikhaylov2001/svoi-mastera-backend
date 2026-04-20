@@ -24,6 +24,12 @@ public class DealController {
         return dealService.acceptOffer(customerUserId, jobRequestId, offerId);
     }
 
+    @PostMapping("/accept-listing")
+    public DealDto acceptListing(@RequestHeader("X-User-Id") UUID customerUserId,
+                                 @RequestParam("listingId") UUID listingId) {
+        return dealService.acceptListing(customerUserId, listingId);
+    }
+
     @GetMapping
     public List<DealDto> myDeals(@RequestHeader("X-User-Id") UUID userId) {
         return dealService.listMyDeals(userId);
