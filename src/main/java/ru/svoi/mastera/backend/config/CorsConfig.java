@@ -16,6 +16,7 @@ public class CorsConfig {
                 registry.addMapping("/api/**")
                         .allowedOrigins(
                                 "https://svoi-mastera-frontend.vercel.app",
+                                "svoi-mastera-frontend-dmitrys-projects-4df4d08c.vercel.app",
                                 "http://localhost:3000"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
