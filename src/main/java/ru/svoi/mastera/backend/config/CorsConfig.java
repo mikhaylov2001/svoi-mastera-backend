@@ -17,6 +17,8 @@ public class CorsConfig {
                         .allowedOrigins(
                                 "https://svoi-mastera-frontend.vercel.app",
                                 "svoi-mastera-frontend-dmitrys-projects-4df4d08c.vercel.app",
+                                "svoi-mastera-frontend-dmitrys-projects-4df4d08c.vercel.app/login",
+                                "svoi-mastera-frontend-dmitrys-projects-4df4d08c.vercel.app/register",
                                 "http://localhost:3000"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
