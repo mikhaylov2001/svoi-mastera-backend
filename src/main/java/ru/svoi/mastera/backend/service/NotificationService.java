@@ -135,20 +135,43 @@ public class NotificationService {
                 "/deals");
     }
 
-    /** Сделка отменена → уведомление обеим сторонам */
+    /**
+     * Сделка отменена → уведомление обеим сторонам (с причиной и подсказкой написать в чат).
+     *
+     * @param wasInProgress {@code true} — отмена при активной работе (IN_PROGRESS),
+     *                        {@code false} — отмена на этапе ожидания (NEW)
+     */
     public void notifyDealCancelled(UUID cancellerUserId, UUID otherUserId,
-                                    String cancellerName, String jobTitle, boolean cancellerIsCustomer) {
-        // Уведомление отменившему
-        create(cancellerUserId, "DEAL_CANCELLED",
-                "Заявка отменена",
-                "Вы отменили заявку «" + jobTitle + "».",
-                "/deals");
-        // Уведомление другой стороне
+                                    String cancellerName, String jobTitle, boolean cancellerIsCustomer,
+                                    String cancellationReason, boolean wasInProgress) {
+        String reason = (cancellationReason == null || cancellationReason.isBlank())
+                ? "не указана"
+                : cancellationReason.trim();
+        if (reason.length() > 500) {
+            reason = reason.substring(0, 497) + "…";
+        }
+
+        String chatHintOther = "\n\n💬 Нужны уточнения? Напишите собеседнику в разделе «Сообщения» — так проще договориться о деталях.";
+        String chatHintSelf = "\n\n💬 При необходимости можно кратко пояснить ситуацию в «Сообщениях».";
+
+        String titleSelf = wasInProgress ? "Сделка отменена" : "Заявка отменена";
+        String bodySelf = (wasInProgress
+                ? ("Вы отменили сделку «" + jobTitle + "», которая уже была в работе.\n\nПричина: " + reason + ".")
+                : ("Вы отменили заявку «" + jobTitle + "».\n\nПричина: " + reason + ".")) + chatHintSelf;
+
         String role = cancellerIsCustomer ? "Заказчик" : "Мастер";
-        create(otherUserId, "DEAL_CANCELLED",
-                role + " отменил заявку ❌",
-                cancellerName + " отменил заявку «" + jobTitle + "».",
-                "/deals");
+        String titleOther = wasInProgress
+                ? (role + " отменил сделку ❌")
+                : (role + " отменил заявку ❌");
+        String bodyOther = wasInProgress
+                ? (role + " " + cancellerName + " отменил(а) сделку «" + jobTitle
+                    + "», которая уже шла в работе.\n\nУказанная причина: " + reason + "." + chatHintOther)
+                : (role + " " + cancellerName + " отменил(а) заявку по «" + jobTitle
+                    + "».\n\nУказанная причина: " + reason + "." + chatHintOther);
+
+        create(cancellerUserId, "DEAL_CANCELLED", titleSelf, bodySelf, "/deals");
+        // Вторая сторона — сразу в чат, чтобы было проще написать
+        create(otherUserId, "DEAL_CANCELLED", titleOther, bodyOther, "/chat");
     }
 
     /** Новое сообщение → уведомление получателю */

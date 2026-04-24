@@ -240,7 +240,7 @@ public class DealService {
             UUID otherUserId = isCustomer ? workerUserId : customerUserId;
             notificationService.notifyDealCancelled(
                     userId, otherUserId, cancellerName,
-                    deal.getJobRequest().getTitle(), isCustomer);
+                    deal.getJobRequest().getTitle(), isCustomer, r, true);
         } catch (Exception ignored) {}
 
         return toDto(deal);
@@ -285,6 +285,17 @@ public class DealService {
         }
 
         deal = dealRepository.save(deal);
+
+        try {
+            String cancellerName = isCustomer
+                    ? deal.getCustomer().getDisplayName()
+                    : deal.getWorker().getDisplayName();
+            UUID otherUserId = isCustomer ? workerUserId : customerUserId;
+            notificationService.notifyDealCancelled(
+                    userId, otherUserId, cancellerName,
+                    deal.getJobRequest().getTitle(), isCustomer, r, false);
+        } catch (Exception ignored) {}
+
         return toDto(deal);
     }
 
