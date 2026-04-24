@@ -60,4 +60,12 @@ public class DealController {
                          @PathVariable("id") UUID dealId) {
         return dealService.workerStartDeal(workerUserId, dealId);
     }
+
+    /** Заказчик или мастер отменяет сделку в статусе NEW */
+    @PostMapping("/{id}/cancel")
+    public DealDto cancel(@RequestHeader("X-User-Id") UUID userId,
+                          @PathVariable("id") UUID dealId,
+                          @RequestParam(required = false) String reason) {
+        return dealService.cancelPendingDeal(userId, dealId, reason);
+    }
 }

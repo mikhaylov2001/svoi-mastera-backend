@@ -198,6 +198,48 @@ public class DealService {
         return toDto(deal);
     }
 
+    /**
+     * Отмена сделки в статусе NEW — заказчик передумал или мастер отказался.
+     * Доступно обеим сторонам, пока заказ не принят в работу.
+     */
+    @Transactional
+    public DealDto cancelPendingDeal(UUID userId, UUID dealId, String reason) {
+        Deal deal = dealRepository.findById(dealId)
+                .orElseThrow(() -> new RuntimeException("Deal not found"));
+
+        if (deal.getStatus() != DealStatus.NEW) {
+            throw new RuntimeException("Only pending (NEW) deals can be cancelled");
+        }
+
+        UUID customerUserId = deal.getCustomer().getUser().getId();
+        UUID workerUserId = deal.getWorker().getUser().getId();
+        if (!userId.equals(customerUserId) && !userId.equals(workerUserId)) {
+            throw new RuntimeException("You are not part of this deal");
+        }
+
+        boolean isCustomer = userId.equals(customerUserId);
+
+        deal.setStatus(DealStatus.CANCELLED);
+        deal.setCancelledAt(Instant.now());
+        String r = (reason == null || reason.isBlank())
+                ? (isCustomer ? "Отменено заказчиком" : "Отклонено мастером")
+                : reason.trim();
+        if (r.length() > 1000) {
+            r = r.substring(0, 1000);
+        }
+        deal.setCancellationReason(r);
+
+        if (deal.getJobRequest() != null) {
+            deal.getJobRequest().setStatus(JobRequestStatus.CANCELLED);
+        }
+        if (deal.getJobOffer() != null) {
+            deal.getJobOffer().setStatus(isCustomer ? JobOfferStatus.WITHDRAWN : JobOfferStatus.REJECTED);
+        }
+
+        deal = dealRepository.save(deal);
+        return toDto(deal);
+    }
+
     @Transactional(readOnly = true)
     public List<DealDto> listMyDeals(UUID userId) {
         User user = userRepository.findById(userId)
