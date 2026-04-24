@@ -151,45 +151,6 @@ public class NotificationService {
                 "/deals");
     }
 
-    /** Обе стороны подтвердили → заказчику нужно оплатить */
-    public void notifyPaymentRequired(UUID customerUserId, String workerName,
-                                      String jobTitle, String amount, UUID dealId) {
-        create(customerUserId, "PAYMENT_REQUIRED",
-                "Работа выполнена — нужна оплата 💳",
-                "Мастер " + workerName + " завершил «" + jobTitle + "». Оплатите работу: " + amount + " ₽.",
-                "/deals");
-    }
-
-    /** Мастер подтвердил → уведомление заказчику (ждём его подтверждения) */
-    public void notifyWorkerConfirmed(UUID customerUserId, String workerName, String jobTitle) {
-        create(customerUserId, "DEAL_CONFIRMED",
-                "Мастер подтвердил выполнение",
-                workerName + " отметил работу «" + jobTitle + "» как выполненную. Подтвердите — и можно оплачивать!",
-                "/deals");
-    }
-
-    /** Заказчик подтвердил → уведомление мастеру (ждём оплаты) */
-    public void notifyCustomerConfirmed(UUID workerUserId, String customerName, String jobTitle) {
-        create(workerUserId, "DEAL_CONFIRMED",
-                "Заказчик подтвердил выполнение",
-                customerName + " подтвердил работу «" + jobTitle + "». Ждём оплату от заказчика.",
-                "/deals");
-    }
-
-    /** Оплата прошла — сделка завершена → уведомление обеим сторонам */
-    public void notifyPaymentDone(UUID customerUserId, UUID workerUserId,
-                                  String customerName, String workerName,
-                                  String jobTitle, String amount) {
-        create(customerUserId, "PAYMENT_DONE",
-                "Оплата прошла ✅",
-                "Сделка «" + jobTitle + "» завершена! Вы оплатили " + amount + " ₽ мастеру " + workerName + ".",
-                "/deals");
-        create(workerUserId, "PAYMENT_DONE",
-                "Оплата получена 💰",
-                "Заказчик " + customerName + " оплатил работу «" + jobTitle + "»: " + amount + " ₽. Отличная работа!",
-                "/deals");
-    }
-
     /** Новое сообщение → уведомление получателю */
     public void notifyNewMessage(UUID receiverUserId, String senderName, String preview) {
         String shortPreview = preview != null && preview.length() > 60
