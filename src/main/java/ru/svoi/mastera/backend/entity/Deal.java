@@ -78,4 +78,8 @@ public class Deal extends BaseEntity {
 
     @OneToMany(mappedBy = "deal")
     private List<Review> reviews;
+
+    /** ID объявления, из которого создана сделка (nullable — для обычных заявок) */
+    @Column(name = "listing_id")
+    private java.util.UUID listingId;
 }

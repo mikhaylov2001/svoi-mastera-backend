@@ -53,4 +53,11 @@ public class DealController {
                             @PathVariable("id") UUID dealId) {
         return dealService.completeDeal(userId, dealId);
     }
+
+    /** Мастер принимает новый заказ: NEW → IN_PROGRESS */
+    @PostMapping("/{id}/start")
+    public DealDto start(@RequestHeader("X-User-Id") UUID workerUserId,
+                         @PathVariable("id") UUID dealId) {
+        return dealService.workerStartDeal(workerUserId, dealId);
+    }
 }

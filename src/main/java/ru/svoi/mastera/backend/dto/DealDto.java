@@ -36,5 +36,7 @@ public class DealDto {
     private String workerLastName;
     private String customerAvatar;
     private String customerLastName;
+    /** ID объявления-источника (null для сделок из заявок) */
+    private UUID listingId;
 
 }

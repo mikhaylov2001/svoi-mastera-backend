@@ -141,11 +141,12 @@ public class DealService {
         deal.setCustomer(customer);
         deal.setWorker(listing.getWorker());
         deal.setAgreedPrice(offer.getPrice());
-        deal.setStatus(DealStatus.IN_PROGRESS);
-        deal.setStartedAt(Instant.now());
-        // Клиент уже согласен на условия по объявлению.
-        deal.setCustomerConfirmed(true);
+        // Статус NEW — ждём подтверждения мастера
+        deal.setStatus(DealStatus.NEW);
+        deal.setCustomerConfirmed(false);
         deal.setWorkerConfirmed(false);
+        // Сохраняем ссылку на объявление для фронта
+        deal.setListingId(listing.getId());
         deal = dealRepository.save(deal);
 
         try {
@@ -153,6 +154,43 @@ public class DealService {
                     listing.getWorker().getUser().getId(),
                     customer.getDisplayName(),
                     jobRequest.getTitle(),
+                    deal.getId()
+            );
+        } catch (Exception ignored) {}
+
+        return toDto(deal);
+    }
+
+    /**
+     * Мастер принимает новую сделку: NEW → IN_PROGRESS.
+     * Вызывается мастером, когда он видит заявку и готов работать.
+     */
+    @Transactional
+    public DealDto workerStartDeal(UUID workerUserId, UUID dealId) {
+        Deal deal = dealRepository.findById(dealId)
+                .orElseThrow(() -> new RuntimeException("Deal not found"));
+
+        if (deal.getStatus() != DealStatus.NEW) {
+            throw new RuntimeException("Deal is not in NEW status");
+        }
+
+        UUID dealWorkerUserId = deal.getWorker().getUser().getId();
+        if (!dealWorkerUserId.equals(workerUserId)) {
+            throw new RuntimeException("You are not the worker of this deal");
+        }
+
+        deal.setStatus(DealStatus.IN_PROGRESS);
+        deal.setStartedAt(Instant.now());
+        deal = dealRepository.save(deal);
+
+        // 🔔 Уведомляем заказчика что мастер принял заказ
+        try {
+            String workerName = deal.getWorker().getDisplayName();
+            String jobTitle = deal.getJobRequest().getTitle();
+            notificationService.notifyDealConfirmed(
+                    deal.getCustomer().getUser().getId(),
+                    workerName,
+                    jobTitle,
                     deal.getId()
             );
         } catch (Exception ignored) {}
@@ -304,7 +342,8 @@ public class DealService {
                 workerAvatar,
                 workerLastName,
                 customerAvatar,
-                customerLastName
+                customerLastName,
+                deal.getListingId()
         );
     }
 
