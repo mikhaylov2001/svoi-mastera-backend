@@ -38,5 +38,9 @@ public class DealDto {
     private String customerLastName;
     /** ID объявления-источника (null для сделок из заявок) */
     private UUID listingId;
+    /** Статус последнего платежа по сделке (null если платежей нет) */
+    private String paymentStatus;
+    /** Причина отмены */
+    private String cancellationReason;
 
 }

@@ -31,6 +31,7 @@ public class DealService {
     private final NotificationService notificationService;
     private final ListingRepository listingRepository;
     private final CategoryRepository categoryRepository;
+    private final PaymentRepository paymentRepository;
 
     @Transactional
     public DealDto acceptOffer(UUID customerUserId, UUID jobRequestId, UUID offerId) {
@@ -150,7 +151,8 @@ public class DealService {
         deal = dealRepository.save(deal);
 
         try {
-            notificationService.notifyDealConfirmed(
+            // Уведомление мастеру: новый заказ ждёт принятия
+            notificationService.notifyDealNew(
                     listing.getWorker().getUser().getId(),
                     customer.getDisplayName(),
                     jobRequest.getTitle(),
@@ -185,14 +187,61 @@ public class DealService {
 
         // 🔔 Уведомляем заказчика что мастер принял заказ
         try {
-            String workerName = deal.getWorker().getDisplayName();
-            String jobTitle = deal.getJobRequest().getTitle();
-            notificationService.notifyDealConfirmed(
+            notificationService.notifyDealStarted(
                     deal.getCustomer().getUser().getId(),
-                    workerName,
-                    jobTitle,
+                    deal.getWorker().getDisplayName(),
+                    deal.getJobRequest().getTitle(),
                     deal.getId()
             );
+        } catch (Exception ignored) {}
+
+        return toDto(deal);
+    }
+
+    /**
+     * Отмена активной сделки (IN_PROGRESS) — обе стороны могут отменить,
+     * пока работа не завершена (COMPLETED / AWAITING_PAYMENT).
+     */
+    @Transactional
+    public DealDto cancelActiveDeal(UUID userId, UUID dealId, String reason) {
+        Deal deal = dealRepository.findById(dealId)
+                .orElseThrow(() -> new RuntimeException("Deal not found"));
+
+        if (deal.getStatus() != DealStatus.IN_PROGRESS) {
+            throw new RuntimeException("Only active (IN_PROGRESS) deals can be cancelled this way");
+        }
+
+        UUID customerUserId = deal.getCustomer().getUser().getId();
+        UUID workerUserId   = deal.getWorker().getUser().getId();
+        if (!userId.equals(customerUserId) && !userId.equals(workerUserId)) {
+            throw new RuntimeException("You are not part of this deal");
+        }
+
+        boolean isCustomer = userId.equals(customerUserId);
+
+        deal.setStatus(DealStatus.CANCELLED);
+        deal.setCancelledAt(Instant.now());
+        String r = (reason == null || reason.isBlank())
+                ? (isCustomer ? "Отменено заказчиком" : "Отменено мастером")
+                : reason.trim();
+        if (r.length() > 1000) r = r.substring(0, 1000);
+        deal.setCancellationReason(r);
+
+        if (deal.getJobRequest() != null) {
+            deal.getJobRequest().setStatus(JobRequestStatus.CANCELLED);
+        }
+
+        deal = dealRepository.save(deal);
+
+        // 🔔 Уведомления обеим сторонам
+        try {
+            String cancellerName = isCustomer
+                    ? deal.getCustomer().getDisplayName()
+                    : deal.getWorker().getDisplayName();
+            UUID otherUserId = isCustomer ? workerUserId : customerUserId;
+            notificationService.notifyDealCancelled(
+                    userId, otherUserId, cancellerName,
+                    deal.getJobRequest().getTitle(), isCustomer);
         } catch (Exception ignored) {}
 
         return toDto(deal);
@@ -295,41 +344,40 @@ public class DealService {
             throw new RuntimeException("You are not part of this deal");
         }
 
-        // Both confirmed -> complete
+        String jobTitle = deal.getJobRequest() != null ? deal.getJobRequest().getTitle() : "Задача";
+        boolean isCustomer = userId.equals(customerUserId);
+
+        // Оба подтвердили → ждём оплату от заказчика
         if (deal.isCustomerConfirmed() && deal.isWorkerConfirmed()) {
-            deal.setStatus(DealStatus.COMPLETED);
-            deal.setCompletedAt(Instant.now());
-            // Synchronize related job request status so frontend и заказчик видят завершение
-            if (deal.getJobRequest() != null) {
-                deal.getJobRequest().setStatus(JobRequestStatus.COMPLETED);
-            }
+            deal.setStatus(DealStatus.AWAITING_PAYMENT);
         }
 
         deal = dealRepository.save(deal);
 
         // 🔔 Уведомления при подтверждении
         try {
-            String jobTitle = deal.getJobRequest().getTitle();
-            boolean isCustomer = userId.equals(deal.getCustomer().getUser().getId());
-
-            if (deal.getStatus() == DealStatus.COMPLETED) {
-                // Обе стороны подтвердили — сделка завершена
-                notificationService.notifyDealCompleted(
-                        deal.getCustomer().getUser().getId(),
-                        deal.getWorker().getUser().getId(),
-                        deal.getCustomer().getDisplayName(),
+            if (deal.getStatus() == DealStatus.AWAITING_PAYMENT) {
+                // Обе стороны подтвердили — просим заказчика оплатить
+                String amount = deal.getAgreedPrice() != null
+                        ? deal.getAgreedPrice().toPlainString() : "договорная";
+                notificationService.notifyPaymentRequired(
+                        customerUserId,
                         deal.getWorker().getDisplayName(),
+                        jobTitle, amount, deal.getId()
+                );
+                notificationService.notifyCustomerConfirmed(
+                        workerUserId,
+                        deal.getCustomer().getDisplayName(),
                         jobTitle
                 );
+            } else if (isCustomer) {
+                // Только заказчик подтвердил → уведомляем мастера
+                notificationService.notifyDealConfirmed(workerUserId,
+                        deal.getCustomer().getDisplayName(), jobTitle, deal.getId());
             } else {
-                // Одна сторона подтвердила — уведомляем другую
-                UUID targetId = isCustomer
-                        ? deal.getWorker().getUser().getId()
-                        : deal.getCustomer().getUser().getId();
-                String confirmerName = isCustomer
-                        ? deal.getCustomer().getDisplayName()
-                        : deal.getWorker().getDisplayName();
-                notificationService.notifyDealConfirmed(targetId, confirmerName, jobTitle, deal.getId());
+                // Только мастер подтвердил → уведомляем заказчика
+                notificationService.notifyWorkerConfirmed(customerUserId,
+                        deal.getWorker().getDisplayName(), jobTitle);
             }
         } catch (Exception ignored) {}
 
@@ -360,33 +408,41 @@ public class DealService {
         boolean hasReview = reviewRepository.existsCustomerReviewByDealId(deal.getId());
         boolean hasWorkerReview = reviewRepository.existsWorkerReviewByDealId(deal.getId());
 
-        return new DealDto(
-                deal.getId(),
-                deal.getJobRequest().getId(),
-                deal.getJobOffer().getId(),
-                deal.getCustomer().getUser().getId(),
-                deal.getWorker().getUser().getId(),
-                customerName,
-                workerName,
-                title,
-                description,
-                category,
-                deal.getAgreedPrice(),
-                deal.getStatus() != null ? deal.getStatus().name() : null,
-                deal.isCustomerConfirmed(),
-                deal.isWorkerConfirmed(),
-                deal.getCreatedAt(),
-                deal.getStartedAt(),
-                deal.getCompletedAt(),
-                hasReview,
-                hasWorkerReview,
-                photos,
-                workerAvatar,
-                workerLastName,
-                customerAvatar,
-                customerLastName,
-                deal.getListingId()
-        );
+        // Статус последнего платежа
+        String paymentStatus = paymentRepository
+                .findFirstByDealIdOrderByCreatedAtDesc(deal.getId())
+                .map(p -> p.getStatus().name())
+                .orElse(null);
+
+        DealDto dto = new DealDto();
+        dto.setId(deal.getId());
+        dto.setJobRequestId(deal.getJobRequest().getId());
+        dto.setJobOfferId(deal.getJobOffer().getId());
+        dto.setCustomerId(deal.getCustomer().getUser().getId());
+        dto.setWorkerId(deal.getWorker().getUser().getId());
+        dto.setCustomerName(customerName);
+        dto.setWorkerName(workerName);
+        dto.setTitle(title);
+        dto.setDescription(description);
+        dto.setCategory(category);
+        dto.setAgreedPrice(deal.getAgreedPrice());
+        dto.setStatus(deal.getStatus() != null ? deal.getStatus().name() : null);
+        dto.setCustomerConfirmed(deal.isCustomerConfirmed());
+        dto.setWorkerConfirmed(deal.isWorkerConfirmed());
+        dto.setCreatedAt(deal.getCreatedAt());
+        dto.setStartedAt(deal.getStartedAt());
+        dto.setCompletedAt(deal.getCompletedAt());
+        dto.setHasReview(hasReview);
+        dto.setHasWorkerReview(hasWorkerReview);
+        dto.setPhotos(photos);
+        dto.setWorkerAvatar(workerAvatar);
+        dto.setWorkerLastName(workerLastName);
+        dto.setCustomerAvatar(customerAvatar);
+        dto.setCustomerLastName(customerLastName);
+        dto.setListingId(deal.getListingId());
+        dto.setPaymentStatus(paymentStatus);
+        dto.setCancellationReason(deal.getCancellationReason());
+        return dto;
     }
 
     @Transactional(readOnly = true)

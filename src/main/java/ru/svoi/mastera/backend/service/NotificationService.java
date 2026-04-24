@@ -119,6 +119,77 @@ public class NotificationService {
         );
     }
 
+    /** Заказчик отправил заявку по объявлению → уведомление мастеру */
+    public void notifyDealNew(UUID workerUserId, String customerName, String jobTitle, UUID dealId) {
+        create(workerUserId, "DEAL_NEW",
+                "Новый заказ! 🔔",
+                customerName + " хочет заказать «" + jobTitle + "». Примите или отклоните заявку.",
+                "/deals");
+    }
+
+    /** Мастер принял заявку → уведомление заказчику */
+    public void notifyDealStarted(UUID customerUserId, String workerName, String jobTitle, UUID dealId) {
+        create(customerUserId, "DEAL_STARTED",
+                "Мастер принял заказ ✅",
+                workerName + " принял ваш заказ «" + jobTitle + "» и готов приступить к работе!",
+                "/deals");
+    }
+
+    /** Сделка отменена → уведомление обеим сторонам */
+    public void notifyDealCancelled(UUID cancellerUserId, UUID otherUserId,
+                                    String cancellerName, String jobTitle, boolean cancellerIsCustomer) {
+        // Уведомление отменившему
+        create(cancellerUserId, "DEAL_CANCELLED",
+                "Заявка отменена",
+                "Вы отменили заявку «" + jobTitle + "».",
+                "/deals");
+        // Уведомление другой стороне
+        String role = cancellerIsCustomer ? "Заказчик" : "Мастер";
+        create(otherUserId, "DEAL_CANCELLED",
+                role + " отменил заявку ❌",
+                cancellerName + " отменил заявку «" + jobTitle + "».",
+                "/deals");
+    }
+
+    /** Обе стороны подтвердили → заказчику нужно оплатить */
+    public void notifyPaymentRequired(UUID customerUserId, String workerName,
+                                      String jobTitle, String amount, UUID dealId) {
+        create(customerUserId, "PAYMENT_REQUIRED",
+                "Работа выполнена — нужна оплата 💳",
+                "Мастер " + workerName + " завершил «" + jobTitle + "». Оплатите работу: " + amount + " ₽.",
+                "/deals");
+    }
+
+    /** Мастер подтвердил → уведомление заказчику (ждём его подтверждения) */
+    public void notifyWorkerConfirmed(UUID customerUserId, String workerName, String jobTitle) {
+        create(customerUserId, "DEAL_CONFIRMED",
+                "Мастер подтвердил выполнение",
+                workerName + " отметил работу «" + jobTitle + "» как выполненную. Подтвердите — и можно оплачивать!",
+                "/deals");
+    }
+
+    /** Заказчик подтвердил → уведомление мастеру (ждём оплаты) */
+    public void notifyCustomerConfirmed(UUID workerUserId, String customerName, String jobTitle) {
+        create(workerUserId, "DEAL_CONFIRMED",
+                "Заказчик подтвердил выполнение",
+                customerName + " подтвердил работу «" + jobTitle + "». Ждём оплату от заказчика.",
+                "/deals");
+    }
+
+    /** Оплата прошла — сделка завершена → уведомление обеим сторонам */
+    public void notifyPaymentDone(UUID customerUserId, UUID workerUserId,
+                                  String customerName, String workerName,
+                                  String jobTitle, String amount) {
+        create(customerUserId, "PAYMENT_DONE",
+                "Оплата прошла ✅",
+                "Сделка «" + jobTitle + "» завершена! Вы оплатили " + amount + " ₽ мастеру " + workerName + ".",
+                "/deals");
+        create(workerUserId, "PAYMENT_DONE",
+                "Оплата получена 💰",
+                "Заказчик " + customerName + " оплатил работу «" + jobTitle + "»: " + amount + " ₽. Отличная работа!",
+                "/deals");
+    }
+
     /** Новое сообщение → уведомление получателю */
     public void notifyNewMessage(UUID receiverUserId, String senderName, String preview) {
         String shortPreview = preview != null && preview.length() > 60

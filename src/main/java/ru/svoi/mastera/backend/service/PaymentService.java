@@ -8,6 +8,7 @@ import ru.svoi.mastera.backend.dto.YooKassaWebhookPayload;
 import ru.svoi.mastera.backend.entity.Deal;
 import ru.svoi.mastera.backend.entity.Payment;
 import ru.svoi.mastera.backend.entity.enams.DealStatus;
+import ru.svoi.mastera.backend.entity.enams.JobRequestStatus;
 import ru.svoi.mastera.backend.entity.enams.PaymentProvider;
 import ru.svoi.mastera.backend.entity.enams.PaymentStatus;
 import ru.svoi.mastera.backend.entity.enams.PaymentType;
@@ -24,6 +25,7 @@ public class PaymentService {
 
     private final DealRepository dealRepository;
     private final PaymentRepository paymentRepository;
+    private final NotificationService notificationService;
 
     private static final BigDecimal FEE_PERCENT = new BigDecimal("0.05");
 
@@ -32,9 +34,11 @@ public class PaymentService {
         Deal deal = dealRepository.findById(dealId)
                 .orElseThrow(() -> new RuntimeException("Deal not found"));
 
-        // проверяем, что платит владелец сделки
         if (!deal.getCustomer().getUser().getId().equals(customerUserId)) {
             throw new RuntimeException("You are not owner of this deal");
+        }
+        if (deal.getStatus() != DealStatus.AWAITING_PAYMENT && deal.getStatus() != DealStatus.IN_PROGRESS) {
+            throw new RuntimeException("Deal is not ready for payment");
         }
 
         BigDecimal amount = deal.getAgreedPrice();
@@ -71,9 +75,27 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         Deal deal = payment.getDeal();
-        if (deal.getStatus() == DealStatus.NEW) {
-            deal.setStatus(DealStatus.IN_PROGRESS);
+        // Завершаем сделку после успешной оплаты
+        if (deal.getStatus() == DealStatus.AWAITING_PAYMENT || deal.getStatus() == DealStatus.NEW) {
+            deal.setStatus(DealStatus.COMPLETED);
+            deal.setCompletedAt(Instant.now());
+            if (deal.getJobRequest() != null) {
+                deal.getJobRequest().setStatus(JobRequestStatus.COMPLETED);
+            }
             dealRepository.save(deal);
+
+            // 🔔 Уведомляем обе стороны
+            try {
+                String jobTitle = deal.getJobRequest() != null ? deal.getJobRequest().getTitle() : "Задача";
+                String amount = deal.getAgreedPrice() != null ? deal.getAgreedPrice().toPlainString() : "0";
+                notificationService.notifyPaymentDone(
+                        deal.getCustomer().getUser().getId(),
+                        deal.getWorker().getUser().getId(),
+                        deal.getCustomer().getDisplayName(),
+                        deal.getWorker().getDisplayName(),
+                        jobTitle, amount
+                );
+            } catch (Exception ignored) {}
         }
     }
 

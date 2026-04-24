@@ -68,4 +68,12 @@ public class DealController {
                           @RequestParam(required = false) String reason) {
         return dealService.cancelPendingDeal(userId, dealId, reason);
     }
+
+    /** Заказчик или мастер отменяет активную сделку (IN_PROGRESS) */
+    @PostMapping("/{id}/cancel-active")
+    public DealDto cancelActive(@RequestHeader("X-User-Id") UUID userId,
+                                @PathVariable("id") UUID dealId,
+                                @RequestParam(required = false) String reason) {
+        return dealService.cancelActiveDeal(userId, dealId, reason);
+    }
 }
