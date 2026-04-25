@@ -60,7 +60,8 @@ public class UserProfileService {
                 phone,
                 city,
                 role,
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getAvatarUrl()
         );
     }
 

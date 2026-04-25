@@ -19,4 +19,6 @@ public class UserProfileDto {
     private String city;
     private String role;
     private Instant createdAt;
+    /** URL или data:image;base64,... из User.avatarUrl */
+    private String avatarUrl;
 }
