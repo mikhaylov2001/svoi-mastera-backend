@@ -34,4 +34,11 @@ public class JobRequestController {
                                  @PathVariable UUID id) {
         return jobRequestService.getById(userId, id);
     }
+
+    @PutMapping("/{id}")
+    public JobRequestDto update(@RequestHeader("X-User-Id") UUID userId,
+                                @PathVariable UUID id,
+                                @RequestBody CreateJobRequestDto dto) {
+        return jobRequestService.update(userId, id, dto);
+    }
 }

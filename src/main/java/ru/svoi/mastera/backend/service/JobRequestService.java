@@ -2,8 +2,10 @@ package ru.svoi.mastera.backend.service;
 
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import ru.svoi.mastera.backend.dto.CreateJobRequestDto;
 import ru.svoi.mastera.backend.dto.JobRequestDto;
 import ru.svoi.mastera.backend.entity.Category;
@@ -16,7 +18,6 @@ import ru.svoi.mastera.backend.repository.CustomerProfileRepository;
 import ru.svoi.mastera.backend.repository.JobRequestRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -109,10 +110,51 @@ public class JobRequestService {
 
     @Transactional(readOnly = true)
     public JobRequestDto getById(UUID userId, UUID requestId) {
-        // userId можно использовать для проверки прав, пока просто игнорируем
         JobRequest jobRequest = jobRequestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Job request not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job request not found"));
 
+        boolean owner = jobRequest.getCustomer() != null
+                && jobRequest.getCustomer().getUser() != null
+                && jobRequest.getCustomer().getUser().getId().equals(userId);
+        boolean open = jobRequest.getStatus() == JobRequestStatus.OPEN;
+        if (!owner && !open) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden");
+        }
         return toDto(jobRequest);
+    }
+
+    @Transactional
+    public JobRequestDto update(UUID userId, UUID requestId, CreateJobRequestDto dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        CustomerProfile customer = customerProfileRepository.findByUser(user)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer profile not found"));
+
+        JobRequest jr = jobRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job request not found"));
+
+        if (!jr.getCustomer().getId().equals(customer.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your request");
+        }
+        if (jr.getStatus() != JobRequestStatus.OPEN) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only open requests can be edited");
+        }
+
+        Category category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category not found"));
+
+        jr.setCategory(category);
+        jr.setTitle(dto.getTitle());
+        jr.setDescription(dto.getDescription() != null ? dto.getDescription() : "Без описания");
+        jr.setCity(dto.getCity());
+        jr.setAddressText(dto.getAddressText());
+        jr.setScheduledAt(dto.getScheduledAt());
+        jr.setBudgetFrom(dto.getBudgetFrom());
+        jr.setBudgetTo(dto.getBudgetTo());
+        if (dto.getPhotos() != null) {
+            jr.setPhotos(dto.getPhotos());
+        }
+        jr = jobRequestRepository.save(jr);
+        return toDto(jr);
     }
 }
