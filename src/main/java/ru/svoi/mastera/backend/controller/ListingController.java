@@ -56,6 +56,12 @@ public class ListingController {
         return listingService.getById(listingId);
     }
 
+    /** Учёт просмотра публичной страницы (не владелец объявления) */
+    @PostMapping("/listings/{listingId}/view")
+    public void recordView(@PathVariable UUID listingId) {
+        listingService.recordView(listingId);
+    }
+
     // Восстановить из архива
     @PostMapping("/listings/{listingId}/restore")
     public ListingDto restore(@RequestHeader("X-User-Id") UUID userId,

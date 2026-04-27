@@ -7,6 +7,8 @@ import ru.svoi.mastera.backend.dto.ListingCreateDto;
 import ru.svoi.mastera.backend.dto.ListingDto;
 import ru.svoi.mastera.backend.entity.Listing;
 import ru.svoi.mastera.backend.entity.WorkerProfile;
+import ru.svoi.mastera.backend.entity.enams.DealStatus;
+import ru.svoi.mastera.backend.repository.DealRepository;
 import ru.svoi.mastera.backend.repository.ListingRepository;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
 
@@ -20,6 +22,7 @@ public class ListingService {
 
     private final ListingRepository listingRepository;
     private final WorkerProfileRepository workerProfileRepository;
+    private final DealRepository dealRepository;
 
     @Transactional
     public ListingDto create(UUID workerUserId, ListingCreateDto dto) {
@@ -105,7 +108,18 @@ public class ListingService {
         return toDto(listing);
     }
 
+    @Transactional
+    public void recordView(UUID listingId) {
+        Listing listing = listingRepository.findById(listingId).orElse(null);
+        if (listing == null) {
+            return;
+        }
+        listing.setViewCount(listing.getViewCount() + 1);
+        listingRepository.save(listing);
+    }
+
     private ListingDto toDto(Listing l) {
+        long pendingDeals = dealRepository.countByListingIdAndStatus(l.getId(), DealStatus.NEW);
         String workerAvatar = l.getWorker().getUser() != null
                 ? l.getWorker().getUser().getAvatarUrl() : null;
         return new ListingDto(
@@ -121,7 +135,9 @@ public class ListingService {
                 l.getCategory(),
                 l.getPhotos(),
                 l.isActive(),
-                l.getCreatedAt()
+                l.getCreatedAt(),
+                l.getViewCount(),
+                pendingDeals
         );
     }
 }

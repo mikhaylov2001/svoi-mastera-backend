@@ -16,5 +16,7 @@ public record ListingDto(
         String category,
         String[] photos,
         boolean active,
-        Instant createdAt
+        Instant createdAt,
+        int viewCount,
+        long pendingDealsCount
 ) {}

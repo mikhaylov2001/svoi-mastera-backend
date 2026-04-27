@@ -36,4 +36,8 @@ public class Listing extends BaseEntity {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    /** Счётчик просмотров публичной страницы объявления */
+    @Column(name = "view_count", nullable = false)
+    private int viewCount = 0;
 }
