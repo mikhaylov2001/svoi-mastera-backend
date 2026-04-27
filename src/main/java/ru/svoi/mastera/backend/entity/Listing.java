@@ -31,8 +31,9 @@ public class Listing extends BaseEntity {
     @Column(length = 100)
     private String category;
 
-    @Column(columnDefinition = "TEXT[]")
-    private String[] photos;
+    /** Хранится как JSON-строка вида ["url1","url2"] чтобы избежать проблем с TEXT[] в Hibernate */
+    @Column(columnDefinition = "TEXT", name = "photos_json")
+    private String photosJson;
 
     @Column(nullable = false)
     private boolean active = true;

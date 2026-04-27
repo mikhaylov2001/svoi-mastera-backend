@@ -12,6 +12,7 @@ import ru.svoi.mastera.backend.repository.DealRepository;
 import ru.svoi.mastera.backend.repository.ListingRepository;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -32,11 +33,11 @@ public class ListingService {
         Listing listing = new Listing();
         listing.setWorker(worker);
         listing.setTitle(dto.title());
-        listing.setDescription(dto.description());
+        listing.setDescription(dto.description() == null ? "" : dto.description());
         listing.setPrice(dto.price());
         listing.setPriceUnit(dto.priceUnit());
         listing.setCategory(dto.category());
-        listing.setPhotos(dto.photos());
+        listing.setPhotosJson(photosToJson(dto.photos()));
         listing.setActive(true);
 
         return toDto(listingRepository.save(listing));
@@ -52,11 +53,11 @@ public class ListingService {
         }
 
         listing.setTitle(dto.title());
-        listing.setDescription(dto.description());
+        listing.setDescription(dto.description() == null ? "" : dto.description());
         listing.setPrice(dto.price());
         listing.setPriceUnit(dto.priceUnit());
         listing.setCategory(dto.category());
-        listing.setPhotos(dto.photos());
+        listing.setPhotosJson(photosToJson(dto.photos()));
 
         return toDto(listingRepository.save(listing));
     }
@@ -118,6 +119,31 @@ public class ListingService {
         listingRepository.save(listing);
     }
 
+    private static String photosToJson(String[] photos) {
+        if (photos == null || photos.length == 0) return "[]";
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < photos.length; i++) {
+            sb.append('"');
+            sb.append(photos[i].replace("\\", "\\\\").replace("\"", "\\\""));
+            sb.append('"');
+            if (i < photos.length - 1) sb.append(',');
+        }
+        sb.append(']');
+        return sb.toString();
+    }
+
+    private static String[] photosFromJson(String json) {
+        if (json == null || json.isBlank() || json.equals("[]")) return new String[0];
+        String inner = json.trim();
+        if (inner.startsWith("[")) inner = inner.substring(1);
+        if (inner.endsWith("]")) inner = inner.substring(0, inner.length() - 1);
+        if (inner.isBlank()) return new String[0];
+        String[] parts = inner.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+        return Arrays.stream(parts)
+                .map(s -> s.trim().replaceAll("^\"|\"$", "").replace("\\\"", "\"").replace("\\\\", "\\"))
+                .toArray(String[]::new);
+    }
+
     private ListingDto toDto(Listing l) {
         long pendingDeals = dealRepository.countByListingIdAndStatus(l.getId(), DealStatus.NEW);
         String workerAvatar = l.getWorker().getUser() != null
@@ -133,7 +159,7 @@ public class ListingService {
                 l.getPrice(),
                 l.getPriceUnit(),
                 l.getCategory(),
-                l.getPhotos(),
+                photosFromJson(l.getPhotosJson()),
                 l.isActive(),
                 l.getCreatedAt(),
                 l.getViewCount(),
