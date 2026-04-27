@@ -4,8 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import ru.svoi.mastera.backend.converter.StringArrayJsonTextConverter;
 
 @Entity
 @Table(name = "listings")
@@ -33,9 +32,8 @@ public class Listing extends BaseEntity {
     @Column(length = 100)
     private String category;
 
-    /** Как в JobRequest: иначе Hibernate падает при записи в PostgreSQL TEXT[] */
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "photos", columnDefinition = "text[]")
+    @Convert(converter = StringArrayJsonTextConverter.class)
+    @Column(name = "photos", columnDefinition = "TEXT")
     private String[] photos;
 
     @Column(nullable = false)
