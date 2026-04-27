@@ -12,7 +12,6 @@ import ru.svoi.mastera.backend.repository.DealRepository;
 import ru.svoi.mastera.backend.repository.ListingRepository;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -37,7 +36,7 @@ public class ListingService {
         listing.setPrice(dto.price());
         listing.setPriceUnit(dto.priceUnit());
         listing.setCategory(dto.category());
-        listing.setPhotosJson(photosToJson(dto.photos()));
+        listing.setPhotos(normalizePhotos(dto.photos()));
         listing.setActive(true);
 
         return toDto(listingRepository.save(listing));
@@ -57,7 +56,7 @@ public class ListingService {
         listing.setPrice(dto.price());
         listing.setPriceUnit(dto.priceUnit());
         listing.setCategory(dto.category());
-        listing.setPhotosJson(photosToJson(dto.photos()));
+        listing.setPhotos(normalizePhotos(dto.photos()));
 
         return toDto(listingRepository.save(listing));
     }
@@ -119,29 +118,11 @@ public class ListingService {
         listingRepository.save(listing);
     }
 
-    private static String photosToJson(String[] photos) {
-        if (photos == null || photos.length == 0) return "[]";
-        StringBuilder sb = new StringBuilder("[");
-        for (int i = 0; i < photos.length; i++) {
-            sb.append('"');
-            sb.append(photos[i].replace("\\", "\\\\").replace("\"", "\\\""));
-            sb.append('"');
-            if (i < photos.length - 1) sb.append(',');
+    private static String[] normalizePhotos(String[] photos) {
+        if (photos == null || photos.length == 0) {
+            return new String[0];
         }
-        sb.append(']');
-        return sb.toString();
-    }
-
-    private static String[] photosFromJson(String json) {
-        if (json == null || json.isBlank() || json.equals("[]")) return new String[0];
-        String inner = json.trim();
-        if (inner.startsWith("[")) inner = inner.substring(1);
-        if (inner.endsWith("]")) inner = inner.substring(0, inner.length() - 1);
-        if (inner.isBlank()) return new String[0];
-        String[] parts = inner.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-        return Arrays.stream(parts)
-                .map(s -> s.trim().replaceAll("^\"|\"$", "").replace("\\\"", "\"").replace("\\\\", "\\"))
-                .toArray(String[]::new);
+        return photos;
     }
 
     private ListingDto toDto(Listing l) {
@@ -159,7 +140,7 @@ public class ListingService {
                 l.getPrice(),
                 l.getPriceUnit(),
                 l.getCategory(),
-                photosFromJson(l.getPhotosJson()),
+                l.getPhotos() != null ? l.getPhotos() : new String[0],
                 l.isActive(),
                 l.getCreatedAt(),
                 l.getViewCount(),

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "listings")
@@ -31,9 +33,10 @@ public class Listing extends BaseEntity {
     @Column(length = 100)
     private String category;
 
-    /** Хранится как JSON-строка вида ["url1","url2"] чтобы избежать проблем с TEXT[] в Hibernate */
-    @Column(columnDefinition = "TEXT", name = "photos_json")
-    private String photosJson;
+    /** Как в JobRequest: иначе Hibernate падает при записи в PostgreSQL TEXT[] */
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "photos", columnDefinition = "text[]")
+    private String[] photos;
 
     @Column(nullable = false)
     private boolean active = true;

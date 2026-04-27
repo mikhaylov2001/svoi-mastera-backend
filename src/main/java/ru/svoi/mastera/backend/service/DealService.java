@@ -120,7 +120,7 @@ public class DealService {
         if (listing.getPrice() != null) {
             jobRequest.setBudgetTo(BigDecimal.valueOf(listing.getPrice()));
         }
-        jobRequest.setPhotos(null);
+        jobRequest.setPhotos(listing.getPhotos());
         jobRequest.setStatus(JobRequestStatus.IN_PROGRESS);
         jobRequest = jobRequestRepository.save(jobRequest);
 
