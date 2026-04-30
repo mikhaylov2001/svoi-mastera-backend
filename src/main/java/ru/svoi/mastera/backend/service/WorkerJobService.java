@@ -88,6 +88,7 @@ public class WorkerJobService {
             customerLastName = jr.getCustomer().getLastName();
             customerAvatar = jr.getCustomer().getUser() != null ? jr.getCustomer().getUser().getAvatarUrl() : null;
         }
+        long offersCount = jobOfferRepository.countByJobRequest_Id(jr.getId());
         return new JobRequestDto(
                 jr.getId(),
                 jr.getCategory().getId(),
@@ -104,7 +105,8 @@ public class WorkerJobService {
                 customerId,
                 customerName,
                 customerLastName,
-                customerAvatar
+                customerAvatar,
+                offersCount
         );
     }
 

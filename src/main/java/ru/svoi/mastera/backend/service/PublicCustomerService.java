@@ -12,6 +12,7 @@ import ru.svoi.mastera.backend.entity.Review;
 import ru.svoi.mastera.backend.entity.enams.JobRequestStatus;
 import ru.svoi.mastera.backend.entity.enams.ReviewStatus;
 import ru.svoi.mastera.backend.repository.CustomerProfileRepository;
+import ru.svoi.mastera.backend.repository.JobOfferRepository;
 import ru.svoi.mastera.backend.repository.JobRequestRepository;
 import ru.svoi.mastera.backend.repository.ReviewRepository;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
@@ -26,6 +27,7 @@ public class PublicCustomerService {
 
     private final CustomerProfileRepository customerProfileRepository;
     private final JobRequestRepository jobRequestRepository;
+    private final JobOfferRepository jobOfferRepository;
     private final ReviewRepository reviewRepository;
     private final WorkerProfileRepository workerProfileRepository;
 
@@ -112,6 +114,8 @@ public class PublicCustomerService {
         String custAvatar   = jr.getCustomer() != null && jr.getCustomer().getUser() != null
                 ? jr.getCustomer().getUser().getAvatarUrl() : null;
 
+        long offersCount = jobOfferRepository.countByJobRequest_Id(jr.getId());
+
         return new JobRequestDto(
                 jr.getId(),
                 jr.getCategory().getId(),
@@ -128,7 +132,8 @@ public class PublicCustomerService {
                 custId,
                 custName,
                 custLastName,
-                custAvatar
+                custAvatar,
+                offersCount
         );
     }
 }

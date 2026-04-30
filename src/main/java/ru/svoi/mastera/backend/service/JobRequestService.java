@@ -15,6 +15,7 @@ import ru.svoi.mastera.backend.entity.User;
 import ru.svoi.mastera.backend.entity.enams.JobRequestStatus;
 import ru.svoi.mastera.backend.repository.CategoryRepository;
 import ru.svoi.mastera.backend.repository.CustomerProfileRepository;
+import ru.svoi.mastera.backend.repository.JobOfferRepository;
 import ru.svoi.mastera.backend.repository.JobRequestRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
 
@@ -29,6 +30,7 @@ public class JobRequestService {
     private final CustomerProfileRepository customerProfileRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final JobOfferRepository jobOfferRepository;
 
     @Transactional
     public JobRequestDto create(UUID userId, CreateJobRequestDto dto){
@@ -74,6 +76,7 @@ public class JobRequestService {
             customerLastName = jr.getCustomer().getLastName();
             customerAvatar = jr.getCustomer().getUser() != null ? jr.getCustomer().getUser().getAvatarUrl() : null;
         }
+        long offersCount = jobOfferRepository.countByJobRequest_Id(jr.getId());
         return new JobRequestDto(
                 jr.getId(),
                 jr.getCategory().getId(),
@@ -90,7 +93,8 @@ public class JobRequestService {
                 customerId,
                 customerName,
                 customerLastName,
-                customerAvatar
+                customerAvatar,
+                offersCount
         );
     }
 

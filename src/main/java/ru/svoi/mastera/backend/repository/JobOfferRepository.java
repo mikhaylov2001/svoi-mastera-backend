@@ -13,4 +13,6 @@ public interface JobOfferRepository extends JpaRepository<JobOffer, UUID> {
     List<JobOffer> findAllByJobRequest(JobRequest jobRequest);
 
     List<JobOffer> findAllByWorker(WorkerProfile worker);
+
+    long countByJobRequest_Id(UUID jobRequestId);
 }

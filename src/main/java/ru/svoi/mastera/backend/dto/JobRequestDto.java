@@ -3,7 +3,6 @@ package ru.svoi.mastera.backend.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.svoi.mastera.backend.entity.JobRequest;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -28,4 +27,7 @@ public class JobRequestDto {
     private UUID customerId;
     private String customerName;
     private String customerLastName;
-    private String customerAvatar;}
+    private String customerAvatar;
+    /** Число откликов мастеров (включая назначенного по объявлению) */
+    private long offersCount;
+}

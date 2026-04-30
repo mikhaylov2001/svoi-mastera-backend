@@ -363,10 +363,13 @@ public class DealService {
             if (deal.getJobRequest() != null) {
                 deal.getJobRequest().setStatus(JobRequestStatus.COMPLETED);
             }
-            deactivateListingAfterCompletedDeal(deal);
         }
 
         deal = dealRepository.save(deal);
+
+        if (deal.getStatus() == DealStatus.COMPLETED) {
+            deactivateListingAfterCompletedDeal(deal);
+        }
 
         try {
             if (deal.getStatus() == DealStatus.COMPLETED) {
@@ -412,6 +415,7 @@ public class DealService {
             if (listing.isActive()) {
                 listing.setActive(false);
                 listingRepository.save(listing);
+                listingRepository.flush();
             }
         });
     }
