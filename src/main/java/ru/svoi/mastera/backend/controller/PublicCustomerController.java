@@ -3,9 +3,11 @@ package ru.svoi.mastera.backend.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.svoi.mastera.backend.dto.CustomerReviewDto;
+import ru.svoi.mastera.backend.dto.CustomerStatsDto;
 import ru.svoi.mastera.backend.dto.JobRequestDto;
 import ru.svoi.mastera.backend.dto.PublicCustomerProfileDto;
 import ru.svoi.mastera.backend.service.PublicCustomerService;
+import ru.svoi.mastera.backend.service.ReviewService;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,6 +18,12 @@ import java.util.UUID;
 public class PublicCustomerController {
 
     private final PublicCustomerService publicCustomerService;
+    private final ReviewService reviewService;
+
+    @GetMapping("/{customerUserId}/stats")
+    public CustomerStatsDto getStats(@PathVariable UUID customerUserId) {
+        return reviewService.getCustomerStats(customerUserId);
+    }
 
     @GetMapping("/{customerId}/profile")
     public PublicCustomerProfileDto getProfile(@PathVariable UUID customerId) {

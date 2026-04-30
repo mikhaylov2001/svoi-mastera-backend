@@ -13,6 +13,8 @@ import ru.svoi.mastera.backend.entity.User;
 import ru.svoi.mastera.backend.entity.WorkerProfile;
 import ru.svoi.mastera.backend.entity.CustomerProfile;
 import ru.svoi.mastera.backend.entity.enams.DealStatus;
+import ru.svoi.mastera.backend.entity.enams.ReviewStatus;
+import ru.svoi.mastera.backend.repository.CustomerProfileRepository;
 import ru.svoi.mastera.backend.repository.DealRepository;
 import ru.svoi.mastera.backend.repository.ReviewRepository;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
@@ -35,6 +37,8 @@ class ReviewServiceTest {
     private DealRepository dealRepository;
     @Mock
     private WorkerProfileRepository workerProfileRepository;
+    @Mock
+    private CustomerProfileRepository customerProfileRepository;
 
     @InjectMocks
     private ReviewService reviewService;
@@ -84,6 +88,7 @@ class ReviewServiceTest {
         review.setDeal(deal);
         review.setAuthorUser(new User());
         review.setRating(4);
+        review.setStatus(ReviewStatus.APPROVED);
 
         when(reviewRepository.findAllByTargetWorker(worker)).thenReturn(List.of(review));
 

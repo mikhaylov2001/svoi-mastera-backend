@@ -3,12 +3,14 @@ package ru.svoi.mastera.backend.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.svoi.mastera.backend.dto.CustomerStatsDto;
 import ru.svoi.mastera.backend.dto.ReviewCreateDto;
 
 import ru.svoi.mastera.backend.dto.ReviewDto;
 import ru.svoi.mastera.backend.dto.WorkerStatsDto;
 import ru.svoi.mastera.backend.entity.*;
 import ru.svoi.mastera.backend.entity.enams.DealStatus;
+import ru.svoi.mastera.backend.entity.enams.ReviewStatus;
 import ru.svoi.mastera.backend.repository.DealRepository;
 import ru.svoi.mastera.backend.repository.ReviewRepository;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
@@ -17,6 +19,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -103,6 +106,7 @@ public class ReviewService {
 
         List<Review> reviews = reviewRepository.findAllByTargetWorker(worker);
         return reviews.stream()
+                .filter(ReviewService::isPubliclyVisibleReview)
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -114,25 +118,52 @@ public class ReviewService {
 
         List<Review> reviews = reviewRepository.findAllByTargetCustomer(customer);
         return reviews.stream()
+                .filter(ReviewService::isPubliclyVisibleReview)
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
-    // ✅ НОВЫЙ МЕТОД: Получить статистику мастера
+    /** Отзывы, учитываемые в рейтинге и в публичных списках. */
+    static boolean isPubliclyVisibleReview(Review r) {
+        ReviewStatus s = r.getStatus();
+        return s == ReviewStatus.APPROVED || s == ReviewStatus.PUBLISHED;
+    }
+
+    @Transactional(readOnly = true)
+    public CustomerStatsDto getCustomerStats(UUID customerUserId) {
+        Optional<CustomerProfile> profile = customerProfileRepository.findByUserId(customerUserId);
+        if (profile.isEmpty()) {
+            return new CustomerStatsDto(0.0, 0L);
+        }
+        List<Review> reviews = reviewRepository.findAllByTargetCustomer(profile.get()).stream()
+                .filter(ReviewService::isPubliclyVisibleReview)
+                .collect(Collectors.toList());
+        if (reviews.isEmpty()) {
+            return new CustomerStatsDto(0.0, 0L);
+        }
+        double averageRating = reviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
+        averageRating = Math.round(averageRating * 10.0) / 10.0;
+        return new CustomerStatsDto(averageRating, (long) reviews.size());
+    }
+
+    // Статистика мастера (рейтинг только по опубликованным отзывам)
     @Transactional(readOnly = true)
     public WorkerStatsDto getWorkerStats(UUID workerUserId) {
-        WorkerProfile worker = workerProfileRepository.findByUserId(workerUserId)
-                .orElseThrow(() -> new RuntimeException("Worker profile not found"));
+        Optional<WorkerProfile> opt = workerProfileRepository.findByUserId(workerUserId);
+        if (opt.isEmpty()) {
+            return new WorkerStatsDto(0.0, 0L, 0L, null, null, null, null, null);
+        }
+        WorkerProfile worker = opt.get();
 
-        List<Review> reviews = reviewRepository.findAllByTargetWorker(worker);
+        List<Review> reviews = reviewRepository.findAllByTargetWorker(worker).stream()
+                .filter(ReviewService::isPubliclyVisibleReview)
+                .collect(Collectors.toList());
 
-        // Количество завершённых работ
         long completedWorks = dealRepository.findAllByWorker(worker)
                 .stream()
                 .filter(deal -> deal.getStatus() == ru.svoi.mastera.backend.entity.enams.DealStatus.COMPLETED)
                 .count();
 
-        // Дата регистрации мастера
         Instant registeredAt = worker.getCreatedAt();
 
         if (reviews.isEmpty()) {
@@ -145,13 +176,11 @@ public class ReviewService {
             );
         }
 
-        // Вычисляем средний рейтинг
         double averageRating = reviews.stream()
                 .mapToInt(Review::getRating)
                 .average()
                 .orElse(0.0);
 
-        // Округляем до 1 знака после запятой
         averageRating = Math.round(averageRating * 10.0) / 10.0;
 
         return new WorkerStatsDto(

@@ -10,6 +10,7 @@ import ru.svoi.mastera.backend.entity.CustomerProfile;
 import ru.svoi.mastera.backend.entity.JobRequest;
 import ru.svoi.mastera.backend.entity.Review;
 import ru.svoi.mastera.backend.entity.enams.JobRequestStatus;
+import ru.svoi.mastera.backend.entity.enams.ReviewStatus;
 import ru.svoi.mastera.backend.repository.CustomerProfileRepository;
 import ru.svoi.mastera.backend.repository.JobRequestRepository;
 import ru.svoi.mastera.backend.repository.ReviewRepository;
@@ -70,6 +71,10 @@ public class PublicCustomerService {
 
         return reviewRepository.findAllByTargetCustomerOrderByCreatedAtDesc(profile)
                 .stream()
+                .filter(r -> {
+                    ReviewStatus s = r.getStatus();
+                    return s == ReviewStatus.APPROVED || s == ReviewStatus.PUBLISHED;
+                })
                 .map(r -> {
                     String authorName = null;
                     String authorAvatar = null;
