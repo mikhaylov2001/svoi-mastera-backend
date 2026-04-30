@@ -163,6 +163,9 @@ public class DealService {
         deal.setListingId(listing.getId());
         deal = dealRepository.save(deal);
 
+        listing.setActive(false);
+        listingRepository.save(listing);
+
         try {
             // Уведомление мастеру: новый заказ ждёт принятия
             notificationService.notifyDealNew(
@@ -241,10 +244,20 @@ public class DealService {
         deal.setCancellationReason(r);
 
         if (deal.getJobRequest() != null) {
-            deal.getJobRequest().setStatus(JobRequestStatus.CANCELLED);
+            JobRequest jr = deal.getJobRequest();
+            jr.setStatus(JobRequestStatus.OPEN);
+            jr.setSelectedOffer(null);
+            jobRequestRepository.save(jr);
+        }
+        if (deal.getJobOffer() != null) {
+            JobOffer o = deal.getJobOffer();
+            o.setStatus(JobOfferStatus.REJECTED);
+            jobOfferRepository.save(o);
         }
 
         deal = dealRepository.save(deal);
+
+        maybeReactivateListingAfterDealCancelled(deal);
 
         // 🔔 Уведомления обеим сторонам
         try {
@@ -292,13 +305,20 @@ public class DealService {
         deal.setCancellationReason(r);
 
         if (deal.getJobRequest() != null) {
-            deal.getJobRequest().setStatus(JobRequestStatus.CANCELLED);
+            JobRequest jr = deal.getJobRequest();
+            jr.setStatus(JobRequestStatus.OPEN);
+            jr.setSelectedOffer(null);
+            jobRequestRepository.save(jr);
         }
         if (deal.getJobOffer() != null) {
-            deal.getJobOffer().setStatus(isCustomer ? JobOfferStatus.WITHDRAWN : JobOfferStatus.REJECTED);
+            JobOffer o = deal.getJobOffer();
+            o.setStatus(isCustomer ? JobOfferStatus.WITHDRAWN : JobOfferStatus.REJECTED);
+            jobOfferRepository.save(o);
         }
 
         deal = dealRepository.save(deal);
+
+        maybeReactivateListingAfterDealCancelled(deal);
 
         try {
             String cancellerName = isCustomer
@@ -412,6 +432,25 @@ public class DealService {
     @Transactional
     public DealDto completeDeal(UUID userId, UUID dealId) {
         return confirmDeal(userId, dealId);
+    }
+
+    /**
+     * После отмены сделки по объявлению — снова показываем объявление в каталоге, если других «живых» сделок нет.
+     */
+    private void maybeReactivateListingAfterDealCancelled(Deal deal) {
+        UUID lid = deal.getListingId();
+        if (lid == null) {
+            return;
+        }
+        if (dealRepository.existsNonCancelledDealForListing(lid)) {
+            return;
+        }
+        listingRepository.findById(lid).ifPresent(l -> {
+            if (!l.isActive()) {
+                l.setActive(true);
+                listingRepository.save(l);
+            }
+        });
     }
 
     /**

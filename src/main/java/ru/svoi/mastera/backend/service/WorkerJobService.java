@@ -12,6 +12,7 @@ import ru.svoi.mastera.backend.entity.User;
 import ru.svoi.mastera.backend.entity.WorkerProfile;
 import ru.svoi.mastera.backend.entity.enams.JobOfferStatus;
 import ru.svoi.mastera.backend.entity.enams.JobRequestStatus;
+import ru.svoi.mastera.backend.repository.DealRepository;
 import ru.svoi.mastera.backend.repository.JobOfferRepository;
 import ru.svoi.mastera.backend.repository.JobRequestRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
@@ -30,6 +31,7 @@ public class WorkerJobService {
     private final WorkerProfileRepository workerProfileRepository;
     private final NotificationService notificationService;
     private final JobRequestService jobRequestService;
+    private final DealRepository dealRepository;
 
     @Transactional
     public List<JobRequestDto> listOpenJobRequests() {
@@ -43,6 +45,7 @@ public class WorkerJobService {
         }
         return list.stream()
                 .filter(jr -> jr.getStatus() == JobRequestStatus.OPEN)
+                .filter(jr -> !dealRepository.existsNonCancelledDealForJobRequest(jr.getId()))
                 .map(this::toJobRequestDto)
                 .collect(Collectors.toList());
     }
@@ -61,7 +64,7 @@ public class WorkerJobService {
         if (jobRequest.getStatus() != JobRequestStatus.OPEN) {
             throw new RuntimeException("Job request is not open");
         }
-        if (jobOfferRepository.existsByJobRequest_IdAndWorker_Id(jobRequest.getId(), worker.getId())) {
+        if (jobOfferRepository.existsOpenLikeOfferFromWorker(jobRequest.getId(), worker.getId())) {
             throw new RuntimeException("Вы уже откликнулись на эту заявку");
         }
         JobOffer offer = new JobOffer();

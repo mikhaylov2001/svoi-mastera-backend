@@ -29,4 +29,12 @@ public interface DealRepository extends JpaRepository<Deal, UUID> {
     boolean existsNonCancelledDealForListingAndCustomerUser(@Param("listingId") UUID listingId, @Param("userId") UUID userId);
 
     boolean existsByJobRequest_IdAndStatus(UUID jobRequestId, DealStatus status);
+
+    /** Сделка по заявке не отменена и не возвращена (в т.ч. NEW / IN_PROGRESS / COMPLETED — заявку для других мастеров не показываем). */
+    @Query("SELECT CASE WHEN COUNT(d) > 0 THEN true ELSE false END FROM Deal d WHERE d.jobRequest.id = :jrId AND d.status NOT IN ('CANCELLED', 'REFUNDED')")
+    boolean existsNonCancelledDealForJobRequest(@Param("jrId") UUID jobRequestId);
+
+    /** По объявлению есть «живая» сделка — объявление скрыто из каталога до отмены/завершения. */
+    @Query("SELECT CASE WHEN COUNT(d) > 0 THEN true ELSE false END FROM Deal d WHERE d.listingId = :lid AND d.status NOT IN ('CANCELLED', 'REFUNDED')")
+    boolean existsNonCancelledDealForListing(@Param("lid") UUID listingId);
 }
