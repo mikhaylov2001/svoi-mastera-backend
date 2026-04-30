@@ -59,6 +59,8 @@ class ReviewServiceTest {
         deal.setCustomer(custProfile);
         deal.setWorker(worker);
         deal.setStatus(DealStatus.COMPLETED);
+        deal.setCustomerConfirmed(true);
+        deal.setWorkerConfirmed(true);
 
         when(dealRepository.findById(dealId)).thenReturn(Optional.of(deal));
         when(reviewRepository.save(any(Review.class))).thenAnswer(i -> {
@@ -72,6 +74,31 @@ class ReviewServiceTest {
         assertThat(res.rating()).isEqualTo(5);
 
         assertThrows(RuntimeException.class, () -> reviewService.create(UUID.randomUUID(), dealId, new ReviewCreateDto(5, "bad")));
+    }
+
+    @Test
+    void createReviewRejectedUntilBothPartiesConfirmed() {
+        UUID customerId = UUID.randomUUID();
+        UUID dealId = UUID.randomUUID();
+
+        User customer = new User(); customer.setId(customerId);
+        CustomerProfile custProfile = new CustomerProfile(); custProfile.setUser(customer);
+        User workerUser = new User(); workerUser.setId(UUID.randomUUID());
+        WorkerProfile worker = new WorkerProfile(); worker.setUser(workerUser);
+
+        Deal deal = new Deal();
+        deal.setId(dealId);
+        deal.setCustomer(custProfile);
+        deal.setWorker(worker);
+        deal.setStatus(DealStatus.COMPLETED);
+        deal.setCustomerConfirmed(true);
+        deal.setWorkerConfirmed(false);
+
+        when(dealRepository.findById(dealId)).thenReturn(Optional.of(deal));
+
+        assertThrows(RuntimeException.class, () ->
+                reviewService.create(customerId, dealId, new ReviewCreateDto(5, "too early")));
+        verify(reviewRepository, never()).save(any());
     }
 
     @Test

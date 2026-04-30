@@ -46,9 +46,7 @@ public class ReviewService {
             throw new RuntimeException("You are not owner of this deal");
         }
 
-        if (deal.getStatus() != DealStatus.COMPLETED) {
-            throw new RuntimeException("Deal must be completed before review");
-        }
+        assertDealEligibleForReviews(deal);
 
         if (reviewRepository.existsCustomerReviewByDealId(dealId)) {
             throw new RuntimeException("Review for this deal already exists");
@@ -78,9 +76,7 @@ public class ReviewService {
             throw new RuntimeException("You are not the worker of this deal");
         }
 
-        if (deal.getStatus() != DealStatus.COMPLETED) {
-            throw new RuntimeException("Deal must be completed before review");
-        }
+        assertDealEligibleForReviews(deal);
 
         if (reviewRepository.existsWorkerReviewByDealId(dealId)) {
             throw new RuntimeException("Review for this deal already exists");
@@ -97,6 +93,19 @@ public class ReviewService {
 
         review = reviewRepository.save(review);
         return toDto(review);
+    }
+
+    /**
+     * Отзыв допустим только когда сделка завершена и обе стороны нажали «Подтвердить выполнение»
+     * ({@link DealStatus#COMPLETED} выставляется в {@link ru.svoi.mastera.backend.service.DealService#confirmDeal}).
+     */
+    private void assertDealEligibleForReviews(Deal deal) {
+        if (deal.getStatus() != DealStatus.COMPLETED) {
+            throw new RuntimeException("Отзыв можно оставить только после завершения сделки");
+        }
+        if (!deal.isCustomerConfirmed() || !deal.isWorkerConfirmed()) {
+            throw new RuntimeException("Отзыв доступен только после подтверждения выполнения заказчиком и мастером");
+        }
     }
 
     @Transactional(readOnly = true)
