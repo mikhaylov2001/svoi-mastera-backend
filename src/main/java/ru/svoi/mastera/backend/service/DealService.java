@@ -51,6 +51,16 @@ public class DealService {
             throw new RuntimeException("You are not owner of this job request");
         }
 
+        if (jobRequest.getStatus() != JobRequestStatus.OPEN) {
+            throw new RuntimeException("Заявка уже не открыта — принять отклик нельзя");
+        }
+        if (jobRequest.getSelectedOffer() != null) {
+            throw new RuntimeException("По этой заявке уже выбран исполнитель");
+        }
+        if (offer.getStatus() != JobOfferStatus.CREATED) {
+            throw new RuntimeException("Этот отклик уже обработан и принять его снова нельзя");
+        }
+
         jobRequest.setStatus(JobRequestStatus.IN_PROGRESS);
         offer.setStatus(JobOfferStatus.ACCEPTED);
         jobRequest.setSelectedOffer(offer);
@@ -96,6 +106,10 @@ public class DealService {
         }
         if (listing.getWorker().getUser().getId().equals(customerUserId)) {
             throw new RuntimeException("You cannot accept your own listing");
+        }
+
+        if (dealRepository.existsNonCancelledDealForListingAndCustomerUser(listing.getId(), customerUserId)) {
+            throw new RuntimeException("Вы уже принимали это объявление — повторно принять нельзя");
         }
 
         Category category = null;

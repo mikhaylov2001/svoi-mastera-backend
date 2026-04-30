@@ -1,6 +1,8 @@
 package ru.svoi.mastera.backend.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import ru.svoi.mastera.backend.entity.CustomerProfile;
 import ru.svoi.mastera.backend.entity.Deal;
 import ru.svoi.mastera.backend.entity.WorkerProfile;
@@ -18,4 +20,11 @@ public interface DealRepository extends JpaRepository<Deal, UUID> {
     long countByListingIdAndStatus(UUID listingId, DealStatus status);
 
     boolean existsByListingIdAndStatus(UUID listingId, DealStatus status);
+
+    /**
+     * Есть ли у заказчика по этому объявлению сделка не в финальных статусах отмены/возврата
+     * (активная или завершённая — повторно «принять объявление» нельзя).
+     */
+    @Query("SELECT CASE WHEN COUNT(d) > 0 THEN true ELSE false END FROM Deal d WHERE d.listingId = :listingId AND d.customer.user.id = :userId AND d.status NOT IN ('CANCELLED', 'REFUNDED')")
+    boolean existsNonCancelledDealForListingAndCustomerUser(@Param("listingId") UUID listingId, @Param("userId") UUID userId);
 }

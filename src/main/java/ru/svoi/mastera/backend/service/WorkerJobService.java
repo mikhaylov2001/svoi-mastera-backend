@@ -56,6 +56,9 @@ public class WorkerJobService {
         if (jobRequest.getStatus() != JobRequestStatus.OPEN) {
             throw new RuntimeException("Job request is not open");
         }
+        if (jobOfferRepository.existsByJobRequest_IdAndWorker_Id(jobRequest.getId(), worker.getId())) {
+            throw new RuntimeException("Вы уже откликнулись на эту заявку");
+        }
         JobOffer offer = new JobOffer();
         offer.setJobRequest(jobRequest);
         offer.setWorker(worker);
