@@ -14,7 +14,11 @@ public class CustomerReviewDto {
     private UUID id;
     private Integer rating;
     private String text;
-    private String workerName;   // кому оставлен отзыв
+    /** Имя мастера — автор отзыва о заказчике */
+    private String workerName;
     private String workerAvatar;
+    /** User id мастера (для ссылки на профиль /workers/{id}) */
+    private UUID authorUserId;
+    private String authorLastName;
     private Instant createdAt;
 }

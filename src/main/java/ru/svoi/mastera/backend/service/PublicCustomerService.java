@@ -78,11 +78,17 @@ public class PublicCustomerService {
                 .map(r -> {
                     String authorName = null;
                     String authorAvatar = null;
+                    String authorLastName = null;
+                    UUID authorUserId = null;
                     if (r.getAuthorUser() != null) {
+                        authorUserId = r.getAuthorUser().getId();
                         authorAvatar = r.getAuthorUser().getAvatarUrl();
-                        authorName = workerProfileRepository.findByUserId(r.getAuthorUser().getId())
-                                .map(wp -> wp.getDisplayName())
-                                .orElse(null);
+                        var wpOpt = workerProfileRepository.findByUserId(authorUserId);
+                        if (wpOpt.isPresent()) {
+                            var wp = wpOpt.get();
+                            authorName = wp.getDisplayName();
+                            authorLastName = wp.getLastName();
+                        }
                     }
                     return new CustomerReviewDto(
                             r.getId(),
@@ -90,6 +96,8 @@ public class PublicCustomerService {
                             r.getText(),
                             authorName,
                             authorAvatar,
+                            authorUserId,
+                            authorLastName,
                             r.getCreatedAt()
                     );
                 })
