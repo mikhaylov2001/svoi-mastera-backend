@@ -12,9 +12,11 @@ import ru.svoi.mastera.backend.entity.Category;
 import ru.svoi.mastera.backend.entity.CustomerProfile;
 import ru.svoi.mastera.backend.entity.JobRequest;
 import ru.svoi.mastera.backend.entity.User;
+import ru.svoi.mastera.backend.entity.enams.DealStatus;
 import ru.svoi.mastera.backend.entity.enams.JobRequestStatus;
 import ru.svoi.mastera.backend.repository.CategoryRepository;
 import ru.svoi.mastera.backend.repository.CustomerProfileRepository;
+import ru.svoi.mastera.backend.repository.DealRepository;
 import ru.svoi.mastera.backend.repository.JobOfferRepository;
 import ru.svoi.mastera.backend.repository.JobRequestRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
@@ -31,6 +33,7 @@ public class JobRequestService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final JobOfferRepository jobOfferRepository;
+    private final DealRepository dealRepository;
 
     @Transactional
     public JobRequestDto create(UUID userId, CreateJobRequestDto dto){
@@ -98,7 +101,7 @@ public class JobRequestService {
         );
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<JobRequestDto> getMy(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -107,12 +110,29 @@ public class JobRequestService {
                 .orElseThrow(() -> new RuntimeException("Customer profile not found"));
 
         List<JobRequest> list = jobRequestRepository.findAllByCustomerOrderByCreatedAtDesc(customer);
+        for (JobRequest jr : list) {
+            reconcileJobRequestIfDealCompleted(jr);
+        }
         return list.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
+    /**
+     * Если по заявке уже есть сделка COMPLETED, а статус заявки не обновился — синхронизируем (устаревшие данные).
+     */
+    public void reconcileJobRequestIfDealCompleted(JobRequest jr) {
+        if (jr.getStatus() == JobRequestStatus.COMPLETED || jr.getStatus() == JobRequestStatus.CANCELLED) {
+            return;
+        }
+        if (!dealRepository.existsByJobRequest_IdAndStatus(jr.getId(), DealStatus.COMPLETED)) {
+            return;
+        }
+        jr.setStatus(JobRequestStatus.COMPLETED);
+        jobRequestRepository.save(jr);
+    }
+
+    @Transactional
     public JobRequestDto getById(UUID userId, UUID requestId) {
         JobRequest jobRequest = jobRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job request not found"));
@@ -123,6 +143,9 @@ public class JobRequestService {
         boolean open = jobRequest.getStatus() == JobRequestStatus.OPEN;
         if (!owner && !open) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden");
+        }
+        if (owner) {
+            reconcileJobRequestIfDealCompleted(jobRequest);
         }
         return toDto(jobRequest);
     }

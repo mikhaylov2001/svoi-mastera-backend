@@ -27,4 +27,6 @@ public interface DealRepository extends JpaRepository<Deal, UUID> {
      */
     @Query("SELECT CASE WHEN COUNT(d) > 0 THEN true ELSE false END FROM Deal d WHERE d.listingId = :listingId AND d.customer.user.id = :userId AND d.status NOT IN ('CANCELLED', 'REFUNDED')")
     boolean existsNonCancelledDealForListingAndCustomerUser(@Param("listingId") UUID listingId, @Param("userId") UUID userId);
+
+    boolean existsByJobRequest_IdAndStatus(UUID jobRequestId, DealStatus status);
 }

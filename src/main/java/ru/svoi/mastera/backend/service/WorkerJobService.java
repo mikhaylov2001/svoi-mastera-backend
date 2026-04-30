@@ -29,15 +29,20 @@ public class WorkerJobService {
     private final UserRepository userRepository;
     private final WorkerProfileRepository workerProfileRepository;
     private final NotificationService notificationService;
+    private final JobRequestService jobRequestService;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<JobRequestDto> listOpenJobRequests() {
         List<JobRequest> list = jobRequestRepository
                 .findAll()
                 .stream()
                 .filter(jr -> jr.getStatus() == JobRequestStatus.OPEN)
                 .collect(Collectors.toList());
+        for (JobRequest jr : list) {
+            jobRequestService.reconcileJobRequestIfDealCompleted(jr);
+        }
         return list.stream()
+                .filter(jr -> jr.getStatus() == JobRequestStatus.OPEN)
                 .map(this::toJobRequestDto)
                 .collect(Collectors.toList());
     }

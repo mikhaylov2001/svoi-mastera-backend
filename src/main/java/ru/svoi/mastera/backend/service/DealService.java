@@ -375,7 +375,9 @@ public class DealService {
             deal.setStatus(DealStatus.COMPLETED);
             deal.setCompletedAt(Instant.now());
             if (deal.getJobRequest() != null) {
-                deal.getJobRequest().setStatus(JobRequestStatus.COMPLETED);
+                JobRequest jr = deal.getJobRequest();
+                jr.setStatus(JobRequestStatus.COMPLETED);
+                jobRequestRepository.save(jr);
             }
         }
 

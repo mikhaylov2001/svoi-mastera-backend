@@ -30,13 +30,17 @@ public class PublicCustomerService {
     private final JobOfferRepository jobOfferRepository;
     private final ReviewRepository reviewRepository;
     private final WorkerProfileRepository workerProfileRepository;
+    private final JobRequestService jobRequestService;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public PublicCustomerProfileDto getProfile(UUID userId) {
         CustomerProfile profile = customerProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Customer not found for userId: " + userId));
 
         List<JobRequest> requests = jobRequestRepository.findAllByCustomerOrderByCreatedAtDesc(profile);
+        for (JobRequest jr : requests) {
+            jobRequestService.reconcileJobRequestIfDealCompleted(jr);
+        }
 
         int total     = requests.size();
         int completed = (int) requests.stream().filter(r -> r.getStatus() == JobRequestStatus.COMPLETED).count();
@@ -55,13 +59,16 @@ public class PublicCustomerService {
         );
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<JobRequestDto> getRequests(UUID userId) {
         CustomerProfile profile = customerProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Customer not found for userId: " + userId));
 
-        return jobRequestRepository.findAllByCustomerOrderByCreatedAtDesc(profile)
-                .stream()
+        List<JobRequest> list = jobRequestRepository.findAllByCustomerOrderByCreatedAtDesc(profile);
+        for (JobRequest jr : list) {
+            jobRequestService.reconcileJobRequestIfDealCompleted(jr);
+        }
+        return list.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
