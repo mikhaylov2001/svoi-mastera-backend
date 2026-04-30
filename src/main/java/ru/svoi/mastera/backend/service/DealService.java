@@ -363,6 +363,7 @@ public class DealService {
             if (deal.getJobRequest() != null) {
                 deal.getJobRequest().setStatus(JobRequestStatus.COMPLETED);
             }
+            deactivateListingAfterCompletedDeal(deal);
         }
 
         deal = dealRepository.save(deal);
@@ -392,6 +393,27 @@ public class DealService {
     @Transactional
     public DealDto completeDeal(UUID userId, UUID dealId) {
         return confirmDeal(userId, dealId);
+    }
+
+    /**
+     * Сделка из объявления: после успешного завершения убираем объявление из активных (архив в «Мои объявления»).
+     */
+    private void deactivateListingAfterCompletedDeal(Deal deal) {
+        UUID listingId = deal.getListingId();
+        if (listingId == null) {
+            return;
+        }
+        listingRepository.findById(listingId).ifPresent(listing -> {
+            UUID listingWorkerUserId = listing.getWorker().getUser().getId();
+            UUID dealWorkerUserId = deal.getWorker().getUser().getId();
+            if (!listingWorkerUserId.equals(dealWorkerUserId)) {
+                return;
+            }
+            if (listing.isActive()) {
+                listing.setActive(false);
+                listingRepository.save(listing);
+            }
+        });
     }
 
     private DealDto toDto(Deal deal) {
