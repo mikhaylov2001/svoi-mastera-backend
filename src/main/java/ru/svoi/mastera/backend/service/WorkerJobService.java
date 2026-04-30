@@ -69,12 +69,39 @@ public class WorkerJobService {
         // 🔔 Уведомление заказчику: мастер откликнулся
         try {
             UUID customerUserId = jobRequest.getCustomer().getUser().getId();
-            String workerName = worker.getDisplayName();
-            notificationService.notifyNewOffer(customerUserId, workerName, jobRequest.getTitle(), jobRequest.getId());
+            String workerLabel = workerOfferShortLabel(worker);
+            notificationService.notifyNewOffer(customerUserId, workerLabel, jobRequest.getTitle(), jobRequest.getId());
         } catch (Exception ignored) {}
 
         return toJobOfferDto(offer);
 
+    }
+
+    /**
+     * Имя и фамилия для отклика: учитываем {@link WorkerProfile#getLastName()};
+     * если фамилии нет, но в displayName несколько слов — делим на имя и остаток.
+     */
+    private static String[] workerOfferNameParts(WorkerProfile worker) {
+        String display = worker.getDisplayName() != null ? worker.getDisplayName().trim() : "";
+        String lastName = worker.getLastName();
+        if (lastName != null && !lastName.isBlank()) {
+            return new String[] { display, lastName.trim() };
+        }
+        int sp = display.indexOf(' ');
+        if (sp > 0) {
+            String first = display.substring(0, sp).trim();
+            String rest = display.substring(sp + 1).trim();
+            return new String[] { first, rest.isEmpty() ? null : rest };
+        }
+        return new String[] { display, null };
+    }
+
+    private static String workerOfferShortLabel(WorkerProfile worker) {
+        String[] p = workerOfferNameParts(worker);
+        if (p[1] != null && !p[1].isBlank()) {
+            return (p[0] + " " + p[1]).trim();
+        }
+        return p[0] != null && !p[0].isBlank() ? p[0] : "Мастер";
     }
 
     private JobRequestDto toJobRequestDto(JobRequest jr) {
@@ -111,14 +138,16 @@ public class WorkerJobService {
     }
 
     private JobOfferDto toJobOfferDto(JobOffer offer) {
+        WorkerProfile w = offer.getWorker();
+        String[] parts = workerOfferNameParts(w);
         return new JobOfferDto(
                 offer.getId(),
                 offer.getJobRequest().getId(),
-                offer.getWorker().getId(),
-                offer.getWorker().getUser().getId(),
-                offer.getWorker().getDisplayName(),
-                offer.getWorker().getLastName(),
-                offer.getWorker().getUser().getAvatarUrl(),
+                w.getId(),
+                w.getUser().getId(),
+                parts[0],
+                parts[1],
+                w.getUser().getAvatarUrl(),
                 offer.getMessage(),
                 offer.getPrice(),
                 offer.getEstimatedDays(),
