@@ -50,6 +50,9 @@ public class ListingService {
         if (!listing.getWorker().getUser().getId().equals(workerUserId)) {
             throw new RuntimeException("Not your listing");
         }
+        if (listingLockedAfterCompletedDeal(listingId)) {
+            throw new RuntimeException("Объявление закрыто после завершённой сделки — редактирование недоступно");
+        }
 
         listing.setTitle(dto.title());
         listing.setDescription(dto.description() == null ? "" : dto.description());
@@ -81,6 +84,9 @@ public class ListingService {
 
         if (!listing.getWorker().getUser().getId().equals(workerUserId)) {
             throw new RuntimeException("Not your listing");
+        }
+        if (listingLockedAfterCompletedDeal(listingId)) {
+            throw new RuntimeException("Объявление завершено по сделке — восстановление недоступно");
         }
 
         listing.setActive(true);
@@ -127,6 +133,7 @@ public class ListingService {
 
     private ListingDto toDto(Listing l) {
         long pendingDeals = dealRepository.countByListingIdAndStatus(l.getId(), DealStatus.NEW);
+        boolean lockedAfterCompletedDeal = listingLockedAfterCompletedDeal(l.getId());
         String workerAvatar = l.getWorker().getUser() != null
                 ? l.getWorker().getUser().getAvatarUrl() : null;
         return new ListingDto(
@@ -144,7 +151,15 @@ public class ListingService {
                 l.isActive(),
                 l.getCreatedAt(),
                 l.getViewCount(),
-                pendingDeals
+                pendingDeals,
+                lockedAfterCompletedDeal
         );
+    }
+
+    private boolean listingLockedAfterCompletedDeal(UUID listingId) {
+        if (listingId == null) {
+            return false;
+        }
+        return dealRepository.existsByListingIdAndStatus(listingId, DealStatus.COMPLETED);
     }
 }

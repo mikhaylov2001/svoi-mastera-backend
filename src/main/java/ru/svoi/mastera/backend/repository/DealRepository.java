@@ -16,4 +16,6 @@ public interface DealRepository extends JpaRepository<Deal, UUID> {
     List<Deal> findAllByWorker(WorkerProfile worker);
 
     long countByListingIdAndStatus(UUID listingId, DealStatus status);
+
+    boolean existsByListingIdAndStatus(UUID listingId, DealStatus status);
 }

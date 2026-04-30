@@ -117,6 +117,7 @@ public class WorkerJobService {
                 offer.getWorker().getId(),
                 offer.getWorker().getUser().getId(),
                 offer.getWorker().getDisplayName(),
+                offer.getWorker().getLastName(),
                 offer.getWorker().getUser().getAvatarUrl(),
                 offer.getMessage(),
                 offer.getPrice(),

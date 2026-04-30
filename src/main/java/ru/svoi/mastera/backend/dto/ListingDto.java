@@ -18,5 +18,7 @@ public record ListingDto(
         boolean active,
         Instant createdAt,
         int viewCount,
-        long pendingDealsCount
+        long pendingDealsCount,
+        /** Объявление снято с публикации после завершённой сделки — без восстановления и редактирования */
+        boolean lockedAfterCompletedDeal
 ) {}

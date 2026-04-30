@@ -16,6 +16,7 @@ public class JobOfferDto {
     private UUID workerId;
     private UUID workerUserId;
     private String workerName;
+    private String workerLastName;
     private String workerAvatarUrl;
     private String message;
     private BigDecimal price;
@@ -27,6 +28,7 @@ public class JobOfferDto {
                        UUID workerId,
                        UUID workerUserId,
                        String workerName,
+                       String workerLastName,
                        String workerAvatarUrl,
                        String message,
                        BigDecimal price,
@@ -38,6 +40,7 @@ public class JobOfferDto {
         this.workerId = workerId;
         this.workerUserId = workerUserId;
         this.workerName = workerName;
+        this.workerLastName = workerLastName;
         this.workerAvatarUrl = workerAvatarUrl;
         this.message = message;
         this.price = price;
