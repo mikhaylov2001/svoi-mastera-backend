@@ -127,7 +127,8 @@ public class DealService {
         jobRequest.setTitle("Заявка по услуге: " + listing.getTitle());
         jobRequest.setDescription(
                 (listing.getDescription() == null || listing.getDescription().isBlank())
-                        ? "Клиент принял вашу услугу из объявления."
+                        // Нейтральный шаблон: на фронте для заказчика/мастера подставляются свои формулировки
+                        ? "Заказ по объявлению мастера из каталога услуг."
                         : listing.getDescription()
         );
         jobRequest.setCity("Йошкар-Ола");
@@ -141,7 +142,7 @@ public class DealService {
         JobOffer offer = new JobOffer();
         offer.setJobRequest(jobRequest);
         offer.setWorker(listing.getWorker());
-        offer.setMessage("Клиент принял работу по вашему объявлению");
+        offer.setMessage("");
         offer.setPrice(BigDecimal.valueOf(listing.getPrice() != null ? listing.getPrice() : 0));
         offer.setStatus(JobOfferStatus.ACCEPTED);
         offer = jobOfferRepository.save(offer);
