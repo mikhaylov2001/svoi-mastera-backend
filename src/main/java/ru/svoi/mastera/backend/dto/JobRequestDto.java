@@ -30,4 +30,6 @@ public class JobRequestDto {
     private String customerAvatar;
     /** Число откликов мастеров (включая назначенного по объявлению) */
     private long offersCount;
+    /** «Безопасная сделка» на карточке — только если заказчик принял заявление о гарантии. */
+    private boolean customerGuaranteeTermsAccepted;
 }

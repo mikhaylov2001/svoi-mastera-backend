@@ -127,6 +127,8 @@ public class WorkerJobService {
             customerAvatar = jr.getCustomer().getUser() != null ? jr.getCustomer().getUser().getAvatarUrl() : null;
         }
         long offersCount = jobOfferRepository.countByJobRequest_Id(jr.getId());
+        boolean customerGuarantee = jr.getCustomer() != null
+                && jr.getCustomer().getGuaranteeTermsAcceptedAt() != null;
         return new JobRequestDto(
                 jr.getId(),
                 jr.getCategory().getId(),
@@ -144,7 +146,8 @@ public class WorkerJobService {
                 customerName,
                 customerLastName,
                 customerAvatar,
-                offersCount
+                offersCount,
+                customerGuarantee
         );
     }
 

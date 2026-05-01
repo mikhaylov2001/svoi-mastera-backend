@@ -22,5 +22,7 @@ public record ListingDto(
         /** Объявление снято с публикации после завершённой сделки — без восстановления и редактирования */
         boolean lockedAfterCompletedDeal,
         /** Верификация личности мастера на платформе */
-        boolean workerVerified
+        boolean workerVerified,
+        /** Заказчик видит «Гарантия» только если мастер принял заявление о гарантии (при опубликованном объявлении). */
+        boolean ownerGuaranteeTermsAccepted
 ) {}

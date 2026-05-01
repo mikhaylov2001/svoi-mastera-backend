@@ -136,6 +136,7 @@ public class ListingService {
         boolean lockedAfterCompletedDeal = listingLockedAfterCompletedDeal(l.getId());
         String workerAvatar = l.getWorker().getUser() != null
                 ? l.getWorker().getUser().getAvatarUrl() : null;
+        boolean ownerGuarantee = l.getWorker().getGuaranteeTermsAcceptedAt() != null;
         return new ListingDto(
                 l.getId(),
                 l.getWorker().getUser().getId(),
@@ -153,7 +154,8 @@ public class ListingService {
                 l.getViewCount(),
                 pendingDeals,
                 lockedAfterCompletedDeal,
-                l.getWorker().isVerified()
+                l.getWorker().isVerified(),
+                ownerGuarantee
         );
     }
 

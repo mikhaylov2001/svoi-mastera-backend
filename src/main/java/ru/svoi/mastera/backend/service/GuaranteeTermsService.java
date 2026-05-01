@@ -1,6 +1,7 @@
 package ru.svoi.mastera.backend.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,8 +26,14 @@ public class GuaranteeTermsService {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
-    /** Версия документа; при изменении текста условий — повысить и выставить новую страницу на фронте. */
-    public static final String CONSENT_VERSION = "2026-05-02-guarantee-v1";
+    /**
+     * Версия текста заявления. Хранится в guarantee_terms_consent_json; при смене формулировок — повысить.
+     * Пользователи, принявшие раннюю версию, остаются на записанной у них версии.
+     */
+    public static final String CONSENT_VERSION = "2026-04-28-guarantee-v2-user-declaration";
+
+    /** Отображение для записей без JSON (нештатно). */
+    private static final String LEGACY_CONSENT_VERSION = "2026-05-02-guarantee-v1";
 
     private final UserRepository userRepository;
     private final WorkerProfileRepository workerProfileRepository;
@@ -38,22 +45,41 @@ public class GuaranteeTermsService {
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
         WorkerProfile w = workerProfileRepository.findByUser(user).orElse(null);
         if (w != null) {
-            return toDto(w.isVerified(), w.getGuaranteeTermsAcceptedAt());
+            return toDto(w.isVerified(), w.getGuaranteeTermsAcceptedAt(), w.getGuaranteeTermsConsentJson());
         }
         CustomerProfile c = customerProfileRepository.findByUser(user).orElse(null);
         if (c != null) {
-            return toDto(c.isVerified(), c.getGuaranteeTermsAcceptedAt());
+            return toDto(c.isVerified(), c.getGuaranteeTermsAcceptedAt(), c.getGuaranteeTermsConsentJson());
         }
         throw new RuntimeException("Профиль не найден");
     }
 
-    private GuaranteeMeDto toDto(boolean verified, Instant acceptedAt) {
-        return new GuaranteeMeDto(
-                verified,
-                acceptedAt != null,
-                acceptedAt,
-                acceptedAt != null ? CONSENT_VERSION : null
-        );
+    private GuaranteeMeDto toDto(boolean verified, Instant acceptedAt, String consentJson) {
+        String version = null;
+        if (acceptedAt != null) {
+            version = extractConsentVersion(consentJson);
+            if (version == null) {
+                version = LEGACY_CONSENT_VERSION;
+            }
+        }
+        return new GuaranteeMeDto(verified, acceptedAt != null, acceptedAt, version);
+    }
+
+    private static String extractConsentVersion(String consentJson) {
+        if (consentJson == null || consentJson.isBlank()) {
+            return null;
+        }
+        try {
+            JsonNode root = JSON.readTree(consentJson);
+            JsonNode v = root.get("consentVersion");
+            if (v != null && v.isTextual()) {
+                String s = v.asText();
+                return s.isBlank() ? null : s;
+            }
+        } catch (JsonProcessingException ignored) {
+            // fall through
+        }
+        return null;
     }
 
     @Transactional
@@ -78,12 +104,12 @@ public class GuaranteeTermsService {
             throw new RuntimeException("Согласие с условиями программы гарантии доступно только после успешной верификации профиля.");
         }
         if (w.getGuaranteeTermsAcceptedAt() != null) {
-            return toDto(true, w.getGuaranteeTermsAcceptedAt());
+            return toDto(true, w.getGuaranteeTermsAcceptedAt(), w.getGuaranteeTermsConsentJson());
         }
         w.setGuaranteeTermsAcceptedAt(Instant.now());
         w.setGuaranteeTermsConsentJson(buildConsentSnapshot());
         workerProfileRepository.save(w);
-        return toDto(true, w.getGuaranteeTermsAcceptedAt());
+        return toDto(true, w.getGuaranteeTermsAcceptedAt(), w.getGuaranteeTermsConsentJson());
     }
 
     private GuaranteeMeDto acceptCustomer(CustomerProfile c) {
@@ -91,23 +117,23 @@ public class GuaranteeTermsService {
             throw new RuntimeException("Согласие с условиями программы гарантии доступно только после успешной верификации профиля.");
         }
         if (c.getGuaranteeTermsAcceptedAt() != null) {
-            return toDto(true, c.getGuaranteeTermsAcceptedAt());
+            return toDto(true, c.getGuaranteeTermsAcceptedAt(), c.getGuaranteeTermsConsentJson());
         }
         c.setGuaranteeTermsAcceptedAt(Instant.now());
         c.setGuaranteeTermsConsentJson(buildConsentSnapshot());
         customerProfileRepository.save(c);
-        return toDto(true, c.getGuaranteeTermsAcceptedAt());
+        return toDto(true, c.getGuaranteeTermsAcceptedAt(), c.getGuaranteeTermsConsentJson());
     }
 
     private void validateClauses(GuaranteeAcceptDto dto) {
         if (dto == null) {
             throw new RuntimeException("Передайте отметки согласия по всем пунктам.");
         }
-        requireTrue(dto.getAcceptDealProcedure(), "Не отмечено согласие с порядком заключения и исполнения сделки.");
-        requireTrue(dto.getAcceptPaymentSettlement(), "Не отмечено согласие с правилами расчётов.");
-        requireTrue(dto.getAcceptDisputeResolution(), "Не отмечено согласие с порядком разрешения споров.");
-        requireTrue(dto.getAcceptOperatorDisclaimer(), "Не отмечено согласие с разделом о роли оператора платформы.");
-        requireTrue(dto.getAcceptPersonalDeclarations(), "Не подтверждены заявления о достоверности данных.");
+        requireTrue(dto.getAcceptDealProcedure(), "Отметьте: личная гарантия добросовестного исполнения обязательств по сделке.");
+        requireTrue(dto.getAcceptPaymentSettlement(), "Отметьте: ответственность за расчёты между сторонами на мне.");
+        requireTrue(dto.getAcceptDisputeResolution(), "Отметьте: споры с контрагентом — вне претензий к оператору.");
+        requireTrue(dto.getAcceptOperatorDisclaimer(), "Отметьте: отказ от претензий к владельцу/оператору платформы.");
+        requireTrue(dto.getAcceptPersonalDeclarations(), "Отметьте: достоверность сведений и принятие заявления целиком.");
     }
 
     private static void requireTrue(Boolean v, String msg) {
