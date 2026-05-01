@@ -20,6 +20,7 @@ import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +32,13 @@ public class VerificationService {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
-    private static final String CONSENT_VERSION = "2026-04-01";
-    private static final int MIN_DOCUMENTS = 2;
+    /** Версия согласия: тест по правилам + чекбокс (без документов и ЭП). */
+    private static final String CONSENT_VERSION = "2026-05-01-quiz-rules";
+
+    /**
+     * Правильные индексы вариантов по порядку вопросов (синхронно с {@code verificationQuiz.js} на фронте).
+     */
+    private static final int[] QUIZ_CORRECT_OPTION_INDEX = {1, 0, 2, 1, 1, 2};
 
     private final UserRepository userRepository;
     private final WorkerProfileRepository workerProfileRepository;
@@ -93,7 +99,7 @@ public class VerificationService {
             throw new RuntimeException("Заявка уже на проверке. Дождитесь решения.");
         }
         validatePayload(userId, dto);
-        w.setVerificationDocumentsJson(writeJson(dto.getDocumentUrls()));
+        w.setVerificationDocumentsJson(writeQuizJson(dto.getQuizAnswers()));
         w.setVerificationSignatureJson(buildSignatureJson(dto.getSignature()));
         w.setVerificationSubmittedAt(Instant.now());
         w.setVerificationRejectionReason(null);
@@ -116,7 +122,7 @@ public class VerificationService {
             throw new RuntimeException("Заявка уже на проверке. Дождитесь решения.");
         }
         validatePayload(userId, dto);
-        c.setVerificationDocumentsJson(writeJson(dto.getDocumentUrls()));
+        c.setVerificationDocumentsJson(writeQuizJson(dto.getQuizAnswers()));
         c.setVerificationSignatureJson(buildSignatureJson(dto.getSignature()));
         c.setVerificationSubmittedAt(Instant.now());
         c.setVerificationRejectionReason(null);
@@ -132,30 +138,30 @@ public class VerificationService {
     }
 
     private void validatePayload(UUID userId, VerificationSubmitDto dto) {
-        List<String> urls = dto.getDocumentUrls();
-        if (urls == null || urls.size() < MIN_DOCUMENTS) {
-            throw new RuntimeException("Загрузите минимум два документа: удостоверение личности и подтверждающий документ.");
+        List<Integer> answers = dto.getQuizAnswers();
+        if (answers == null || answers.size() != QUIZ_CORRECT_OPTION_INDEX.length) {
+            throw new RuntimeException("Ответьте на все вопросы теста.");
         }
-        for (String url : urls) {
-            if (!urlBelongsToUser(userId, url)) {
-                throw new RuntimeException("Недопустимый URL документа. Загрузите файлы заново.");
+        for (int i = 0; i < QUIZ_CORRECT_OPTION_INDEX.length; i++) {
+            Integer a = answers.get(i);
+            if (a == null || a < 0 || a > 2 || !a.equals(QUIZ_CORRECT_OPTION_INDEX[i])) {
+                throw new RuntimeException("В тесте есть неверные ответы. Ознакомьтесь с правилами общения на платформе и попробуйте снова.");
             }
         }
         VerificationSignaturePayloadDto sig = dto.getSignature();
         if (sig == null) {
-            throw new RuntimeException("Заполните блок электронной подписи.");
+            throw new RuntimeException("Заполните ФИО и подтвердите согласие с правилами.");
         }
         if (sig.getFullLegalName() == null || sig.getFullLegalName().trim().length() < 3) {
-            throw new RuntimeException("Укажите полное ФИО как в документе.");
+            throw new RuntimeException("Укажите полное ФИО.");
         }
         if (sig.getAgreementAccepted() == null || !sig.getAgreementAccepted()) {
-            throw new RuntimeException("Необходимо принять условия проверки документов.");
+            throw new RuntimeException("Нужно подтвердить согласие с правилами платформы (отметьте галочку).");
         }
-        if (sig.getSignatureImageUrl() == null || sig.getSignatureImageUrl().isBlank()) {
-            throw new RuntimeException("Добавьте изображение вашей подписи (поле подписи на странице).");
-        }
-        if (!urlBelongsToUser(userId, sig.getSignatureImageUrl())) {
-            throw new RuntimeException("Недопустимый файл подписи.");
+        if (sig.getSignatureImageUrl() != null && !sig.getSignatureImageUrl().isBlank()) {
+            if (!urlBelongsToUser(userId, sig.getSignatureImageUrl())) {
+                throw new RuntimeException("Недопустимый файл подписи.");
+            }
         }
     }
 
@@ -167,11 +173,15 @@ public class VerificationService {
         return url.contains(needle);
     }
 
-    private String writeJson(List<String> urls) {
+    private String writeQuizJson(List<Integer> answers) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("kind", "quiz-rules-v1");
+        map.put("answers", answers != null ? new ArrayList<>(answers) : List.of());
+        map.put("recordedAt", Instant.now().toString());
         try {
-            return JSON.writeValueAsString(urls);
+            return JSON.writeValueAsString(map);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Ошибка сохранения документов");
+            throw new RuntimeException("Ошибка сохранения результата теста");
         }
     }
 
@@ -180,12 +190,15 @@ public class VerificationService {
         map.put("fullLegalName", sig.getFullLegalName().trim());
         map.put("agreementAccepted", Boolean.TRUE.equals(sig.getAgreementAccepted()));
         map.put("consentVersion", CONSENT_VERSION);
-        map.put("signatureImageUrl", sig.getSignatureImageUrl());
+        map.put("rulesAccepted", Boolean.TRUE);
+        if (sig.getSignatureImageUrl() != null && !sig.getSignatureImageUrl().isBlank()) {
+            map.put("signatureImageUrl", sig.getSignatureImageUrl());
+        }
         map.put("serverRecordedAt", Instant.now().toString());
         try {
             return JSON.writeValueAsString(map);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Ошибка сохранения подписи");
+            throw new RuntimeException("Ошибка сохранения согласия");
         }
     }
 

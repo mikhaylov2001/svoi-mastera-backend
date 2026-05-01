@@ -10,6 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VerificationSubmitDto {
-    private List<String> documentUrls;
+    /** Индекс выбранного варианта по каждому вопросу теста (порядок как на фронте). */
+    private List<Integer> quizAnswers;
     private VerificationSignaturePayloadDto signature;
 }

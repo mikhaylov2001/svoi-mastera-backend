@@ -8,8 +8,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VerificationSignaturePayloadDto {
+    /** ФИО для учётной записи (как в профиле). */
     private String fullLegalName;
+    /** Согласие с правилами платформы (обязательный чекбокс). */
     private Boolean agreementAccepted;
-    /** URL файла подписи после загрузки через /api/v1/files/upload */
+    /** Устарело: раньше требовалась загрузка изображения подписи. */
     private String signatureImageUrl;
 }
