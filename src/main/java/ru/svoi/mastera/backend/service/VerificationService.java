@@ -29,13 +29,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class VerificationService {
 
+    private static final ObjectMapper JSON = new ObjectMapper();
+
     private static final String CONSENT_VERSION = "2026-04-01";
     private static final int MIN_DOCUMENTS = 2;
 
     private final UserRepository userRepository;
     private final WorkerProfileRepository workerProfileRepository;
     private final CustomerProfileRepository customerProfileRepository;
-    private final ObjectMapper objectMapper;
 
     @Value("${app.verification.auto-approve:true}")
     private boolean verificationAutoApprove;
@@ -168,7 +169,7 @@ public class VerificationService {
 
     private String writeJson(List<String> urls) {
         try {
-            return objectMapper.writeValueAsString(urls);
+            return JSON.writeValueAsString(urls);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Ошибка сохранения документов");
         }
@@ -182,7 +183,7 @@ public class VerificationService {
         map.put("signatureImageUrl", sig.getSignatureImageUrl());
         map.put("serverRecordedAt", Instant.now().toString());
         try {
-            return objectMapper.writeValueAsString(map);
+            return JSON.writeValueAsString(map);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Ошибка сохранения подписи");
         }
