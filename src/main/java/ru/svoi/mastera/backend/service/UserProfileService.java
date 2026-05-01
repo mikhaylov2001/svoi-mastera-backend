@@ -37,6 +37,7 @@ public class UserProfileService {
         boolean verified = false;
         String verificationStatus = "NONE";
         String verificationRejectionReason = null;
+        boolean guaranteeTermsAccepted = false;
 
         CustomerProfile customerProfile = customerProfileRepository.findByUser(user).orElse(null);
         WorkerProfile workerProfile = workerProfileRepository.findByUser(user).orElse(null);
@@ -50,6 +51,7 @@ public class UserProfileService {
             verified    = workerProfile.isVerified();
             verificationStatus = workerProfile.getVerificationStatus().name();
             verificationRejectionReason = workerProfile.getVerificationRejectionReason();
+            guaranteeTermsAccepted = workerProfile.getGuaranteeTermsAcceptedAt() != null;
         } else if (customerProfile != null) {
             displayName = customerProfile.getDisplayName();
             lastName    = customerProfile.getLastName();
@@ -59,6 +61,7 @@ public class UserProfileService {
             verified    = customerProfile.isVerified();
             verificationStatus = customerProfile.getVerificationStatus().name();
             verificationRejectionReason = customerProfile.getVerificationRejectionReason();
+            guaranteeTermsAccepted = customerProfile.getGuaranteeTermsAcceptedAt() != null;
         }
 
         return new UserProfileDto(
@@ -73,7 +76,8 @@ public class UserProfileService {
                 user.getAvatarUrl(),
                 verified,
                 verificationStatus,
-                verificationRejectionReason
+                verificationRejectionReason,
+                guaranteeTermsAccepted
         );
     }
 

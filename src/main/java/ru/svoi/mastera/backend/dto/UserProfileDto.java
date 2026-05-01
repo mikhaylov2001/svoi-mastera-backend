@@ -25,4 +25,7 @@ public class UserProfileDto {
     private boolean verified;
     private String verificationStatus;
     private String verificationRejectionReason;
+
+    /** Условия программы гарантии сделок приняты (после верификации). */
+    private boolean guaranteeTermsAccepted;
 }

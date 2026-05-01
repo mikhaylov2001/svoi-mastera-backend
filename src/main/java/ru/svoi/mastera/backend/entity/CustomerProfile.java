@@ -59,5 +59,11 @@ public class CustomerProfile extends BaseEntity {
 
     @Column(name = "verification_rejection_reason", length = 500)
     private String verificationRejectionReason;
+
+    @Column(name = "guarantee_terms_accepted_at")
+    private Instant guaranteeTermsAcceptedAt;
+
+    @Column(name = "guarantee_terms_consent_json", columnDefinition = "TEXT")
+    private String guaranteeTermsConsentJson;
 }
 
