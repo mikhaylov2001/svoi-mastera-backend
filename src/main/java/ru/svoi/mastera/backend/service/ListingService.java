@@ -152,7 +152,8 @@ public class ListingService {
                 l.getCreatedAt(),
                 l.getViewCount(),
                 pendingDeals,
-                lockedAfterCompletedDeal
+                lockedAfterCompletedDeal,
+                l.getWorker().isVerified()
         );
     }
 

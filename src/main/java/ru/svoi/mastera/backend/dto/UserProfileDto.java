@@ -21,4 +21,8 @@ public class UserProfileDto {
     private Instant createdAt;
     /** URL или data:image;base64,... из User.avatarUrl */
     private String avatarUrl;
+
+    private boolean verified;
+    private String verificationStatus;
+    private String verificationRejectionReason;
 }

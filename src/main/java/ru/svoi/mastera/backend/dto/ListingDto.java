@@ -20,5 +20,7 @@ public record ListingDto(
         int viewCount,
         long pendingDealsCount,
         /** Объявление снято с публикации после завершённой сделки — без восстановления и редактирования */
-        boolean lockedAfterCompletedDeal
+        boolean lockedAfterCompletedDeal,
+        /** Верификация личности мастера на платформе */
+        boolean workerVerified
 ) {}

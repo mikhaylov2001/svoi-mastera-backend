@@ -34,6 +34,9 @@ public class UserProfileService {
         String phone = null;
         String city = null;
         String role = null;
+        boolean verified = false;
+        String verificationStatus = "NONE";
+        String verificationRejectionReason = null;
 
         CustomerProfile customerProfile = customerProfileRepository.findByUser(user).orElse(null);
         WorkerProfile workerProfile = workerProfileRepository.findByUser(user).orElse(null);
@@ -44,12 +47,18 @@ public class UserProfileService {
             phone       = workerProfile.getPhone();
             city        = workerProfile.getCity();
             role        = "WORKER";
+            verified    = workerProfile.isVerified();
+            verificationStatus = workerProfile.getVerificationStatus().name();
+            verificationRejectionReason = workerProfile.getVerificationRejectionReason();
         } else if (customerProfile != null) {
             displayName = customerProfile.getDisplayName();
             lastName    = customerProfile.getLastName();
             phone       = customerProfile.getPhone();
             city        = customerProfile.getCity();
             role        = "CUSTOMER";
+            verified    = customerProfile.isVerified();
+            verificationStatus = customerProfile.getVerificationStatus().name();
+            verificationRejectionReason = customerProfile.getVerificationRejectionReason();
         }
 
         return new UserProfileDto(
@@ -61,7 +70,10 @@ public class UserProfileService {
                 city,
                 role,
                 user.getCreatedAt(),
-                user.getAvatarUrl()
+                user.getAvatarUrl(),
+                verified,
+                verificationStatus,
+                verificationRejectionReason
         );
     }
 

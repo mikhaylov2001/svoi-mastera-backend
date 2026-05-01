@@ -28,3 +28,10 @@ spring:
       enabled: true
       max-file-size: 50MB
       max-request-size: 50MB
+
+# Верификация: auto-approve=true — галочка сразу после отправки документов и ЭП (удобно для демо).
+# Для ручной модерации: false + ADMIN_VERIFICATION_KEY + POST /verification/admin/users/{userId}/approve
+app:
+  verification:
+    auto-approve: ${VERIFICATION_AUTO_APPROVE:true}
+    admin-key: ${ADMIN_VERIFICATION_KEY:}

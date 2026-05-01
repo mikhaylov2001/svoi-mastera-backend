@@ -160,7 +160,7 @@ public class ReviewService {
     public WorkerStatsDto getWorkerStats(UUID workerUserId) {
         Optional<WorkerProfile> opt = workerProfileRepository.findByUserId(workerUserId);
         if (opt.isEmpty()) {
-            return new WorkerStatsDto(0.0, 0L, 0L, null, null, null, null, null);
+            return new WorkerStatsDto(0.0, 0L, 0L, null, null, null, null, null, false);
         }
         WorkerProfile worker = opt.get();
 
@@ -181,7 +181,8 @@ public class ReviewService {
                     worker.getDisplayName(),
                     worker.getLastName(),
                     worker.getUser() != null ? worker.getUser().getAvatarUrl() : null,
-                    worker.getCity()
+                    worker.getCity(),
+                    worker.isVerified()
             );
         }
 
@@ -197,7 +198,8 @@ public class ReviewService {
                 worker.getDisplayName(),
                 worker.getLastName(),
                 worker.getUser() != null ? worker.getUser().getAvatarUrl() : null,
-                worker.getCity()
+                worker.getCity(),
+                worker.isVerified()
         );
     }
 

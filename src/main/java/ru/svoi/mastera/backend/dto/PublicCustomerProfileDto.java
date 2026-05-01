@@ -20,4 +20,5 @@ public class PublicCustomerProfileDto {
     private int totalRequests;
     private int completedRequests;
     private int openRequests;
+    private boolean verified;
 }

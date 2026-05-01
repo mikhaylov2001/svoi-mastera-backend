@@ -55,7 +55,8 @@ public class PublicCustomerService {
                 profile.getUser() != null ? profile.getUser().getCreatedAt() : null,
                 total,
                 completed,
-                open
+                open,
+                profile.isVerified()
         );
     }
 

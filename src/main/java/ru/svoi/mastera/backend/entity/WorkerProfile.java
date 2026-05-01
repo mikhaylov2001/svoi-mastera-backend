@@ -4,8 +4,10 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.svoi.mastera.backend.entity.enams.VerificationStatus;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -54,4 +56,20 @@ public class WorkerProfile extends BaseEntity{
 
     @Column(length = 150)
     private String lastName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verification_status", nullable = false, length = 32)
+    private VerificationStatus verificationStatus = VerificationStatus.NONE;
+
+    @Column(name = "verification_submitted_at")
+    private Instant verificationSubmittedAt;
+
+    @Column(name = "verification_documents_json", columnDefinition = "TEXT")
+    private String verificationDocumentsJson;
+
+    @Column(name = "verification_signature_json", columnDefinition = "TEXT")
+    private String verificationSignatureJson;
+
+    @Column(name = "verification_rejection_reason", length = 500)
+    private String verificationRejectionReason;
 }
