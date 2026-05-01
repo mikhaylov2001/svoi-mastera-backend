@@ -20,6 +20,9 @@ import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -150,10 +153,14 @@ public class VerificationService {
         }
         VerificationSignaturePayloadDto sig = dto.getSignature();
         if (sig == null) {
-            throw new RuntimeException("Заполните ФИО и подтвердите согласие с правилами.");
+            throw new RuntimeException("Заполните все поля формы: данные о себе и согласие с правилами.");
         }
         if (sig.getFullLegalName() == null || sig.getFullLegalName().trim().length() < 3) {
             throw new RuntimeException("Укажите полное ФИО.");
+        }
+        validateBirthDate(sig.getBirthDate());
+        if (sig.getResidence() == null || sig.getResidence().trim().length() < 3) {
+            throw new RuntimeException("Укажите населённый пункт или регион проживания (не короче 3 символов).");
         }
         if (sig.getAgreementAccepted() == null || !sig.getAgreementAccepted()) {
             throw new RuntimeException("Нужно подтвердить согласие с правилами платформы (отметьте галочку).");
@@ -162,6 +169,29 @@ public class VerificationService {
             if (!urlBelongsToUser(userId, sig.getSignatureImageUrl())) {
                 throw new RuntimeException("Недопустимый файл подписи.");
             }
+        }
+    }
+
+    private void validateBirthDate(String raw) {
+        if (raw == null || raw.isBlank()) {
+            throw new RuntimeException("Укажите дату рождения.");
+        }
+        LocalDate birth;
+        try {
+            birth = LocalDate.parse(raw.trim());
+        } catch (DateTimeParseException e) {
+            throw new RuntimeException("Некорректная дата рождения.");
+        }
+        LocalDate today = LocalDate.now();
+        if (!birth.isBefore(today)) {
+            throw new RuntimeException("Дата рождения должна быть в прошлом.");
+        }
+        int age = Period.between(birth, today).getYears();
+        if (age < 14) {
+            throw new RuntimeException("Для использования платформы возраст должен быть не менее 14 лет.");
+        }
+        if (age > 120) {
+            throw new RuntimeException("Проверьте корректность даты рождения.");
         }
     }
 
@@ -188,6 +218,8 @@ public class VerificationService {
     private String buildSignatureJson(VerificationSignaturePayloadDto sig) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("fullLegalName", sig.getFullLegalName().trim());
+        map.put("birthDate", sig.getBirthDate().trim());
+        map.put("residence", sig.getResidence().trim());
         map.put("agreementAccepted", Boolean.TRUE.equals(sig.getAgreementAccepted()));
         map.put("consentVersion", CONSENT_VERSION);
         map.put("rulesAccepted", Boolean.TRUE);
