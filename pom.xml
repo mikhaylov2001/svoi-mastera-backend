@@ -50,9 +50,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
+        <!-- SB 4: миграции при старте идут через стартер, не только flyway-core -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
+            <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
         <dependency>
@@ -83,14 +88,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation-test</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -125,13 +122,21 @@
                     </excludes>
                 </configuration>
             </plugin>
-            <!-- Ручной запуск: ./mvnw flyway:migrate -Dflyway.url=... -Dflyway.user=... -Dflyway.password=... -->
+            <!-- Ручной запуск: см. scripts/flyway-migrate.sh или:
+                 ./mvnw -q compile flyway:migrate -Dflyway.url=... -Dflyway.user=... -Dflyway.password=... -->
             <plugin>
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-maven-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.flywaydb</groupId>
+                        <artifactId>flyway-database-postgresql</artifactId>
+                        <version>${flyway.version}</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <locations>
-                        <location>filesystem:src/main/resources/db/migration</location>
+                        <location>classpath:db/migration</location>
                     </locations>
                     <baselineOnMigrate>true</baselineOnMigrate>
                     <baselineVersion>1</baselineVersion>
