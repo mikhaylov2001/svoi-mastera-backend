@@ -12,6 +12,7 @@ import ru.svoi.mastera.backend.entity.Category;
 import ru.svoi.mastera.backend.entity.CustomerProfile;
 import ru.svoi.mastera.backend.entity.JobRequest;
 import ru.svoi.mastera.backend.entity.User;
+import ru.svoi.mastera.backend.entity.Deal;
 import ru.svoi.mastera.backend.entity.enams.DealStatus;
 import ru.svoi.mastera.backend.entity.enams.JobRequestStatus;
 import ru.svoi.mastera.backend.repository.CategoryRepository;
@@ -25,6 +26,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static ru.svoi.mastera.backend.entity.enams.DealStatus.COMPLETED;
+import static ru.svoi.mastera.backend.entity.enams.DealStatus.IN_PROGRESS;
+import static ru.svoi.mastera.backend.entity.enams.DealStatus.NEW;
+
 @Service
 @RequiredArgsConstructor
 public class JobRequestService {
@@ -34,6 +39,7 @@ public class JobRequestService {
     private final CategoryRepository categoryRepository;
     private final JobOfferRepository jobOfferRepository;
     private final DealRepository dealRepository;
+    private final DealService dealService;
 
     @Transactional
     public JobRequestDto create(UUID userId, CreateJobRequestDto dto){
@@ -186,5 +192,52 @@ public class JobRequestService {
         }
         jr = jobRequestRepository.save(jr);
         return toDto(jr);
+    }
+
+    /**
+     * Заказчик снимает заявку с публикации: OPEN → CANCELLED;
+     * при активной сделке сначала отменяем её через {@link DealService}, затем помечаем заявку CANCELLED.
+     */
+    @Transactional
+    public JobRequestDto cancelByCustomer(UUID userId, UUID requestId) {
+        JobRequest jr = jobRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job request not found"));
+
+        if (jr.getCustomer() == null || jr.getCustomer().getUser() == null
+                || !jr.getCustomer().getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your request");
+        }
+
+        JobRequestStatus st = jr.getStatus();
+        if (st == JobRequestStatus.CANCELLED || st == JobRequestStatus.COMPLETED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Эту заявку уже нельзя убрать");
+        }
+
+        if (st == JobRequestStatus.OPEN) {
+            jr.setStatus(JobRequestStatus.CANCELLED);
+            jobRequestRepository.save(jr);
+            return toDto(jr);
+        }
+
+        String reason = "Заявка снята заказчиком";
+        List<Deal> deals = dealRepository.findAllByJobRequest_Id(requestId);
+        for (Deal d : deals) {
+            DealStatus ds = d.getStatus();
+            if (ds == DealStatus.CANCELLED || ds == DealStatus.REFUNDED || ds == COMPLETED) {
+                continue;
+            }
+            if (ds == NEW) {
+                dealService.cancelPendingDeal(userId, d.getId(), reason);
+            } else if (ds == IN_PROGRESS) {
+                dealService.cancelActiveDeal(userId, d.getId(), reason);
+            }
+        }
+
+        JobRequest refreshed = jobRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job request not found"));
+        refreshed.setStatus(JobRequestStatus.CANCELLED);
+        refreshed.setSelectedOffer(null);
+        jobRequestRepository.save(refreshed);
+        return toDto(refreshed);
     }
 }

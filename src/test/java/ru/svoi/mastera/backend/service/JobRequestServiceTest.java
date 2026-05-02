@@ -11,8 +11,11 @@ import ru.svoi.mastera.backend.entity.Category;
 import ru.svoi.mastera.backend.entity.CustomerProfile;
 import ru.svoi.mastera.backend.entity.JobRequest;
 import ru.svoi.mastera.backend.entity.User;
+import ru.svoi.mastera.backend.entity.enams.JobRequestStatus;
 import ru.svoi.mastera.backend.repository.CategoryRepository;
 import ru.svoi.mastera.backend.repository.CustomerProfileRepository;
+import ru.svoi.mastera.backend.repository.DealRepository;
+import ru.svoi.mastera.backend.repository.JobOfferRepository;
 import ru.svoi.mastera.backend.repository.JobRequestRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
 
@@ -34,6 +37,12 @@ class JobRequestServiceTest {
     private UserRepository userRepository;
     @Mock
     private CategoryRepository categoryRepository;
+    @Mock
+    private JobOfferRepository jobOfferRepository;
+    @Mock
+    private DealRepository dealRepository;
+    @Mock
+    private DealService dealService;
 
     @InjectMocks
     private JobRequestService jobRequestService;
@@ -56,6 +65,7 @@ class JobRequestServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(customerProfileRepository.findByUser(user)).thenReturn(Optional.of(customer));
         when(categoryRepository.findById(catId)).thenReturn(Optional.of(category));
+        when(jobOfferRepository.countByJobRequest_Id(any())).thenReturn(0L);
         when(jobRequestRepository.save(any(JobRequest.class))).thenAnswer(invocation -> {
             JobRequest jr = invocation.getArgument(0);
             jr.setId(UUID.randomUUID());
@@ -77,6 +87,8 @@ class JobRequestServiceTest {
         savedRequest.setId(created.getId());
         savedRequest.setCategory(category);
         savedRequest.setTitle("Test");
+        savedRequest.setCustomer(customer);
+        savedRequest.setStatus(JobRequestStatus.OPEN);
         when(jobRequestRepository.findById(created.getId())).thenReturn(Optional.of(savedRequest));
         JobRequestDto byId = jobRequestService.getById(userId, created.getId());
         assertThat(byId).isNotNull();

@@ -37,4 +37,6 @@ public interface DealRepository extends JpaRepository<Deal, UUID> {
     /** По объявлению есть «живая» сделка — объявление скрыто из каталога до отмены/завершения. */
     @Query("SELECT CASE WHEN COUNT(d) > 0 THEN true ELSE false END FROM Deal d WHERE d.listingId = :lid AND d.status NOT IN ('CANCELLED', 'REFUNDED')")
     boolean existsNonCancelledDealForListing(@Param("lid") UUID listingId);
+
+    List<Deal> findAllByJobRequest_Id(UUID jobRequestId);
 }

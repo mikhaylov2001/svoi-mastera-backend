@@ -41,4 +41,10 @@ public class JobRequestController {
                                 @RequestBody CreateJobRequestDto dto) {
         return jobRequestService.update(userId, id, dto);
     }
+
+    /** Заказчик снимает заявку (открытую или с активной сделкой — сделка будет отменена). */
+    @PostMapping("/{id}/cancel")
+    public JobRequestDto cancel(@RequestHeader("X-User-Id") UUID userId, @PathVariable UUID id) {
+        return jobRequestService.cancelByCustomer(userId, id);
+    }
 }
