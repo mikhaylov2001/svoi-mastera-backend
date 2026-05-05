@@ -13,6 +13,7 @@ import ru.svoi.mastera.backend.repository.CategoryRepository;  // ✅ ДОБАВ
 import ru.svoi.mastera.backend.repository.UserRepository;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
 import ru.svoi.mastera.backend.repository.WorkerServiceItemRepository;
+import ru.svoi.mastera.backend.util.UnicodeText;
 
 import java.util.List;
 import java.util.UUID;
@@ -64,7 +65,7 @@ public class WorkerServiceItemService {
         WorkerProfile worker = workerProfileRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Worker profile not found"));
 
-        String title = dto != null && dto.getTitle() != null ? dto.getTitle().trim() : "";
+        String title = dto != null && dto.getTitle() != null ? UnicodeText.nfkc(dto.getTitle().trim()) : "";
         if (title.isEmpty()) throw new RuntimeException("Title is required");
 
         // ✅ ДОБАВЛЕНО: categoryId обязателен
@@ -75,7 +76,7 @@ public class WorkerServiceItemService {
         WorkerServiceItem item = new WorkerServiceItem();
         item.setWorkerProfile(worker);
         item.setTitle(title);
-        item.setDescription(dto.getDescription());
+        item.setDescription(dto.getDescription() != null ? UnicodeText.nfkc(dto.getDescription()) : null);
         item.setPriceFrom(dto.getPriceFrom());
         item.setPriceTo(dto.getPriceTo());
         item.setActive(dto.getActive() == null || dto.getActive());
@@ -104,11 +105,11 @@ public class WorkerServiceItemService {
         }
 
         if (dto != null && dto.getTitle() != null) {
-            String title = dto.getTitle().trim();
+            String title = UnicodeText.nfkc(dto.getTitle().trim());
             if (title.isEmpty()) throw new RuntimeException("Title is required");
             item.setTitle(title);
         }
-        if (dto != null && dto.getDescription() != null) item.setDescription(dto.getDescription());
+        if (dto != null && dto.getDescription() != null) item.setDescription(UnicodeText.nfkc(dto.getDescription()));
         if (dto != null && dto.getPriceFrom() != null) item.setPriceFrom(dto.getPriceFrom());
         if (dto != null && dto.getPriceTo() != null) item.setPriceTo(dto.getPriceTo());
         if (dto != null && dto.getActive() != null) item.setActive(dto.getActive());

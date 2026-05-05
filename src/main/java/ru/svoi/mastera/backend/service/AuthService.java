@@ -15,6 +15,7 @@ import ru.svoi.mastera.backend.entity.enams.UserStatus;
 import ru.svoi.mastera.backend.repository.CustomerProfileRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
+import ru.svoi.mastera.backend.util.UnicodeText;
 
 import java.util.UUID;
 
@@ -45,8 +46,8 @@ public class AuthService {
         if (asWorker) {
             WorkerProfile worker = new WorkerProfile();
             worker.setUser(user);
-            worker.setDisplayName(request.getDisplayName());
-            worker.setLastName(request.getLastName());
+            worker.setDisplayName(UnicodeText.nfkc(request.getDisplayName()));
+            worker.setLastName(request.getLastName() != null ? UnicodeText.nfkc(request.getLastName()) : null);
             worker.setActive(true);
             worker.setVerified(false);
             workerProfileRepository.save(worker);
@@ -55,8 +56,8 @@ public class AuthService {
         if (asCustomer) {
             CustomerProfile customer = new CustomerProfile();
             customer.setUser(user);
-            customer.setDisplayName(request.getDisplayName());
-            customer.setLastName(request.getLastName());
+            customer.setDisplayName(UnicodeText.nfkc(request.getDisplayName()));
+            customer.setLastName(request.getLastName() != null ? UnicodeText.nfkc(request.getLastName()) : null);
             customerProfileRepository.save(customer);
         }
 

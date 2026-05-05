@@ -23,6 +23,7 @@ import ru.svoi.mastera.backend.repository.JobRequestRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
 import ru.svoi.mastera.backend.entity.WorkerProfile;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
+import ru.svoi.mastera.backend.util.UnicodeText;
 
 import java.util.List;
 import java.util.Optional;
@@ -66,10 +67,10 @@ public class JobRequestService {
         JobRequest jobRequest = new JobRequest();
         jobRequest.setCustomer(customer);
         jobRequest.setCategory(category);
-        jobRequest.setTitle(dto.getTitle());
-        jobRequest.setDescription(dto.getDescription());
-        jobRequest.setCity(dto.getCity());
-        jobRequest.setAddressText(dto.getAddressText());
+        jobRequest.setTitle(UnicodeText.nfkc(dto.getTitle()));
+        jobRequest.setDescription(UnicodeText.nfkc(dto.getDescription()));
+        jobRequest.setCity(dto.getCity() != null ? UnicodeText.nfkc(dto.getCity()) : null);
+        jobRequest.setAddressText(dto.getAddressText() != null ? UnicodeText.nfkc(dto.getAddressText()) : null);
         jobRequest.setScheduledAt(dto.getScheduledAt());
         jobRequest.setBudgetFrom(dto.getBudgetFrom());
         jobRequest.setBudgetTo(dto.getBudgetTo());
@@ -205,10 +206,10 @@ public class JobRequestService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category not found"));
 
         jr.setCategory(category);
-        jr.setTitle(dto.getTitle());
-        jr.setDescription(dto.getDescription() != null ? dto.getDescription() : "Без описания");
-        jr.setCity(dto.getCity());
-        jr.setAddressText(dto.getAddressText());
+        jr.setTitle(UnicodeText.nfkc(dto.getTitle()));
+        jr.setDescription(dto.getDescription() != null ? UnicodeText.nfkc(dto.getDescription()) : UnicodeText.nfkc("Без описания"));
+        jr.setCity(dto.getCity() != null ? UnicodeText.nfkc(dto.getCity()) : null);
+        jr.setAddressText(dto.getAddressText() != null ? UnicodeText.nfkc(dto.getAddressText()) : null);
         jr.setScheduledAt(dto.getScheduledAt());
         jr.setBudgetFrom(dto.getBudgetFrom());
         jr.setBudgetTo(dto.getBudgetTo());

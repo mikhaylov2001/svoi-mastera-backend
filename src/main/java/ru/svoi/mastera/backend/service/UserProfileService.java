@@ -13,6 +13,7 @@ import ru.svoi.mastera.backend.entity.WorkerProfile;
 import ru.svoi.mastera.backend.repository.CustomerProfileRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
+import ru.svoi.mastera.backend.util.UnicodeText;
 
 import java.util.UUID;
 
@@ -101,16 +102,16 @@ public class UserProfileService {
         WorkerProfile workerProfile = workerProfileRepository.findByUser(user).orElse(null);
 
         if (workerProfile != null) {
-            if (dto.getDisplayName() != null) workerProfile.setDisplayName(dto.getDisplayName());
-            if (dto.getLastName()    != null) workerProfile.setLastName(dto.getLastName());
+            if (dto.getDisplayName() != null) workerProfile.setDisplayName(UnicodeText.nfkc(dto.getDisplayName()));
+            if (dto.getLastName()    != null) workerProfile.setLastName(UnicodeText.nfkc(dto.getLastName()));
             if (dto.getPhone()       != null) workerProfile.setPhone(dto.getPhone());
-            if (dto.getCity()        != null) workerProfile.setCity(dto.getCity());
+            if (dto.getCity()        != null) workerProfile.setCity(UnicodeText.nfkc(dto.getCity()));
             workerProfileRepository.save(workerProfile);
         } else if (customerProfile != null) {
-            if (dto.getDisplayName() != null) customerProfile.setDisplayName(dto.getDisplayName());
-            if (dto.getLastName()    != null) customerProfile.setLastName(dto.getLastName());
+            if (dto.getDisplayName() != null) customerProfile.setDisplayName(UnicodeText.nfkc(dto.getDisplayName()));
+            if (dto.getLastName()    != null) customerProfile.setLastName(UnicodeText.nfkc(dto.getLastName()));
             if (dto.getPhone()       != null) customerProfile.setPhone(dto.getPhone());
-            if (dto.getCity()        != null) customerProfile.setCity(dto.getCity());
+            if (dto.getCity()        != null) customerProfile.setCity(UnicodeText.nfkc(dto.getCity()));
             customerProfileRepository.save(customerProfile);
         }
 

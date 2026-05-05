@@ -11,7 +11,9 @@ import ru.svoi.mastera.backend.entity.enams.DealStatus;
 import ru.svoi.mastera.backend.repository.DealRepository;
 import ru.svoi.mastera.backend.repository.ListingRepository;
 import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
+import ru.svoi.mastera.backend.util.UnicodeText;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -128,7 +130,10 @@ public class ListingService {
         if (photos == null || photos.length == 0) {
             return new String[0];
         }
-        return photos;
+        return Arrays.stream(photos)
+                .filter(s -> s != null && !s.isBlank())
+                .map(String::trim)
+                .toArray(String[]::new);
     }
 
     private ListingDto toDto(Listing l) {

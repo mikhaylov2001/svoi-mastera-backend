@@ -13,6 +13,7 @@ import ru.svoi.mastera.backend.entity.User;
 import ru.svoi.mastera.backend.repository.JobRequestRepository;
 import ru.svoi.mastera.backend.repository.MessageRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
+import ru.svoi.mastera.backend.util.UnicodeText;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,7 +37,7 @@ public class MessageService {
         Message msg = new Message();
         msg.setSender(sender);
         msg.setReceiver(receiver);
-        msg.setText(dto.getText());
+        msg.setText(UnicodeText.nfkc(dto.getText()));
         msg.setRead(false);
 
         // Сохраняем вложение (фото/видео/голосовое/файл/геолокация)
