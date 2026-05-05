@@ -39,4 +39,8 @@ public interface DealRepository extends JpaRepository<Deal, UUID> {
     boolean existsNonCancelledDealForListing(@Param("lid") UUID listingId);
 
     List<Deal> findAllByJobRequest_Id(UUID jobRequestId);
+
+    /** Есть ли у мастера по этой заявке сделка не в CANCELLED/REFUNDED. */
+    @Query("SELECT CASE WHEN COUNT(d) > 0 THEN true ELSE false END FROM Deal d WHERE d.jobRequest.id = :jrId AND d.worker.id = :wid AND d.status NOT IN ('CANCELLED', 'REFUNDED')")
+    boolean existsNonCancelledDealForJobRequestAndWorker(@Param("jrId") UUID jobRequestId, @Param("wid") UUID workerId);
 }

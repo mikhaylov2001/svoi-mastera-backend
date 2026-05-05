@@ -21,8 +21,11 @@ import ru.svoi.mastera.backend.repository.DealRepository;
 import ru.svoi.mastera.backend.repository.JobOfferRepository;
 import ru.svoi.mastera.backend.repository.JobRequestRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
+import ru.svoi.mastera.backend.entity.WorkerProfile;
+import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,6 +42,7 @@ public class JobRequestService {
     private final CategoryRepository categoryRepository;
     private final JobOfferRepository jobOfferRepository;
     private final DealRepository dealRepository;
+    private final WorkerProfileRepository workerProfileRepository;
     private final DealService dealService;
 
     @Transactional
@@ -150,13 +154,34 @@ public class JobRequestService {
                 && jobRequest.getCustomer().getUser() != null
                 && jobRequest.getCustomer().getUser().getId().equals(userId);
         boolean open = jobRequest.getStatus() == JobRequestStatus.OPEN;
-        if (!owner && !open) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden");
-        }
+
         if (owner) {
             reconcileJobRequestIfDealCompleted(jobRequest);
+            return toDto(jobRequest);
         }
-        return toDto(jobRequest);
+
+        if (open) {
+            return toDto(jobRequest);
+        }
+
+        // Мастер с откликом или активной сделкой по заявке — видит карточку после смены статуса
+        if (workerHasActivityOnRequest(userId, requestId)) {
+            return toDto(jobRequest);
+        }
+
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden");
+    }
+
+    private boolean workerHasActivityOnRequest(UUID userId, UUID jobRequestId) {
+        Optional<WorkerProfile> wp = workerProfileRepository.findByUserId(userId);
+        if (wp.isEmpty()) {
+            return false;
+        }
+        UUID workerProfileId = wp.get().getId();
+        if (jobOfferRepository.existsOpenLikeOfferFromWorker(jobRequestId, workerProfileId)) {
+            return true;
+        }
+        return dealRepository.existsNonCancelledDealForJobRequestAndWorker(jobRequestId, workerProfileId);
     }
 
     @Transactional

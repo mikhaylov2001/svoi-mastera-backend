@@ -18,6 +18,7 @@ import ru.svoi.mastera.backend.repository.DealRepository;
 import ru.svoi.mastera.backend.repository.JobOfferRepository;
 import ru.svoi.mastera.backend.repository.JobRequestRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
+import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -43,6 +44,8 @@ class JobRequestServiceTest {
     private DealRepository dealRepository;
     @Mock
     private DealService dealService;
+    @Mock
+    private WorkerProfileRepository workerProfileRepository;
 
     @InjectMocks
     private JobRequestService jobRequestService;
