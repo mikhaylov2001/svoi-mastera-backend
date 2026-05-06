@@ -19,6 +19,7 @@ public class CorsConfig {
                                 "https://tanstack-start-app.svoi-mastera.workers.dev",
                                 "https://preview--project-code-dream.lovable.app/register",
                                 "https://preview--project-code-dream.lovable.app",
+                                "https://preview--project-code-dream.lovable.app/login",
                                 "http://localhost:3000"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
