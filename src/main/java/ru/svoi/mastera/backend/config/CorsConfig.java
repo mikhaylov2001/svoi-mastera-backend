@@ -17,6 +17,8 @@ public class CorsConfig {
                         .allowedOrigins(
                                 "https://svoi-mastera-frontend-rose.vercel.app",
                                 "https://tanstack-start-app.svoi-mastera.workers.dev",
+                                "https://preview--project-code-dream.lovable.app/register",
+                                "https://preview--project-code-dream.lovable.app",
                                 "http://localhost:3000"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
