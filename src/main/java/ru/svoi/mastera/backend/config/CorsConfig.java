@@ -20,6 +20,10 @@ public class CorsConfig {
                                 "https://preview--project-code-dream.lovable.app/register",
                                 "https://preview--project-code-dream.lovable.app",
                                 "https://preview--project-code-dream.lovable.app/login",
+                                "/login",
+                                "/register",
+                                "/profile",
+                                "/",
                                 "http://localhost:3000"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
