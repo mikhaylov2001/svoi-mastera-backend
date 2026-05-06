@@ -16,6 +16,7 @@ public class CorsConfig {
                 registry.addMapping("/api/**")
                         .allowedOrigins(
                                 "https://svoi-mastera-frontend-rose.vercel.app",
+                                "https://tanstack-start-app.svoi-mastera.workers.dev",
                                 "http://localhost:3000"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
