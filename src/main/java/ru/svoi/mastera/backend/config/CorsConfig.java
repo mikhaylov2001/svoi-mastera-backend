@@ -25,6 +25,7 @@ public class CorsConfig {
                                 "/profile",
                                 "/",
                                 "http://localhost:3000"
+                                "http://localhost:5173"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                         .allowedHeaders("*")
