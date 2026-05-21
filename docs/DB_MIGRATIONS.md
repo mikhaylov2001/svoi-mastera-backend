@@ -1,32 +1,53 @@
-# Миграции БД (Flyway)
+# Миграции БД
 
-Все изменения схемы — только через `src/main/resources/db/migration/V*.sql`.
+## Рекомендуется: вручную (надёжнее)
 
-При старте с профилем `prod` Flyway применяет миграции автоматически (`application-prod.yml`).
+### Вариант A — только дозаплатка (БД уже прошла V1–V25)
 
-## Ручной запуск (Neon / локально)
+1. Откройте **Neon** → ваш проект → **SQL Editor**.
+2. Скопируйте и выполните целиком файл  
+   [`MANUAL_NEON_FIX.sql`](./MANUAL_NEON_FIX.sql)
+3. В конце запроса проверки должны быть **4 строки** (`phone` ×2, `target_customer_id`, `system`).
+4. **Render** → redeploy бэкенда. Flyway при старте применит V26/V27 ещё раз (это нормально, скрипты идемпотентные) и запишет их в историю.
+
+### Вариант B — все миграции с локальной машины (Flyway CLI)
+
+Из каталога `svoi-mastera-backend`:
 
 ```bash
-export FLYWAY_URL='jdbc:postgresql://HOST/neondb?sslmode=require'
-export FLYWAY_USER='...'
-export FLYWAY_PASSWORD='...'
-./scripts/flyway-migrate.sh migrate
-./scripts/flyway-migrate.sh info
+export FLYWAY_URL='jdbc:postgresql://ВАШ-HOST/neondb?sslmode=require'
+export FLYWAY_USER='neondb_owner'
+export FLYWAY_PASSWORD='ваш_пароль'
+
+./scripts/flyway-migrate.sh info    # что уже применено
+./scripts/flyway-migrate.sh migrate # применить все недостающие V*.sql
 ```
 
-## Переменные на Render
+Пароль и URL — только из Neon Dashboard, **не коммитить** в git.
 
-- `SPRING_PROFILES_ACTIVE=prod`
-- `SPRING_DATASOURCE_URL` — `jdbc:postgresql://...`
-- `SPRING_DATASOURCE_USERNAME`
-- `SPRING_DATASOURCE_PASSWORD`
+### Render (после ручного SQL)
 
-## Важные версии
+```
+SPRING_PROFILES_ACTIVE=prod
+SPRING_DATASOURCE_URL=jdbc:postgresql://....neon.tech/neondb?sslmode=require
+SPRING_DATASOURCE_USERNAME=...
+SPRING_DATASOURCE_PASSWORD=...
+```
+
+URL для Spring — с префиксом `jdbc:postgresql://`, без `channel_binding=require`.
+
+---
+
+## Версии Flyway
 
 | Версия | Содержание |
 |--------|------------|
-| V1–V25 | Базовая схема, объявления, верификация, гарантия |
-| V26 | `phone` в `worker_profiles` / `customer_profiles` |
+| V1–V25 | Полная база (в `src/main/resources/db/migration/`) |
+| V26 | `phone` в профилях |
 | V27 | `reviews.target_customer_id`, nullable `target_worker_id`, `notification_settings.system` |
 
-Файлы в корне `migration_*.sql` — **устарели**, не используются Flyway; логика перенесена в V26/V27.
+Ручной фикс для уже развёрнутой БД: **только V26+V27** → [`MANUAL_NEON_FIX.sql`](./MANUAL_NEON_FIX.sql).
+
+## Пустая новая БД
+
+Либо `./scripts/flyway-migrate.sh migrate` (все V1–V27), либо один deploy бэкенда с `SPRING_PROFILES_ACTIVE=prod` — Flyway создаст всё сам.
