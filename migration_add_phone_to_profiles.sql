@@ -1,2 +1,3 @@
-ALTER TABLE worker_profiles ADD COLUMN IF NOT EXISTS phone VARCHAR(20);
-ALTER TABLE customer_profiles ADD COLUMN IF NOT EXISTS phone VARCHAR(20);
+-- УСТАРЕЛО: используйте Flyway V26__add_phone_to_profiles.sql
+-- ALTER TABLE worker_profiles ADD COLUMN IF NOT EXISTS phone VARCHAR(20);
+-- ALTER TABLE customer_profiles ADD COLUMN IF NOT EXISTS phone VARCHAR(20);
