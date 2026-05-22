@@ -26,6 +26,8 @@ import ru.svoi.mastera.backend.repository.WorkerProfileRepository;
 import ru.svoi.mastera.backend.util.UnicodeText;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -37,6 +39,12 @@ import static ru.svoi.mastera.backend.entity.enams.DealStatus.NEW;
 @Service
 @RequiredArgsConstructor
 public class JobRequestService {
+
+    private static final Map<String, String> CATALOG_SLUG_FALLBACK = Map.of(
+            "santehnika", "remont-kvartir",
+            "elektrika", "remont-kvartir"
+    );
+
     private final JobRequestRepository jobRequestRepository;
     private final CustomerProfileRepository customerProfileRepository;
     private final UserRepository userRepository;
@@ -117,11 +125,8 @@ public class JobRequestService {
 
     @Transactional
     public List<JobRequestDto> getMy(UUID userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        CustomerProfile customer = customerProfileRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Customer profile not found"));
+        User user = requireUser(userId);
+        CustomerProfile customer = requireCustomerProfile(user);
 
         List<JobRequest> list = jobRequestRepository.findAllByCustomerOrderByCreatedAtDesc(customer);
         for (JobRequest jr : list) {
@@ -187,10 +192,8 @@ public class JobRequestService {
 
     @Transactional
     public JobRequestDto update(UUID userId, UUID requestId, CreateJobRequestDto dto) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        CustomerProfile customer = customerProfileRepository.findByUser(user)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer profile not found"));
+        User user = requireUser(userId);
+        CustomerProfile customer = requireCustomerProfile(user);
 
         JobRequest jr = jobRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job request not found"));
@@ -202,8 +205,7 @@ public class JobRequestService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only open requests can be edited");
         }
 
-        Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category not found"));
+        Category category = resolveCategory(dto);
 
         jr.setCategory(category);
         jr.setTitle(UnicodeText.nfkc(dto.getTitle()));
@@ -265,5 +267,53 @@ public class JobRequestService {
         refreshed.setSelectedOffer(null);
         jobRequestRepository.save(refreshed);
         return toDto(refreshed);
+    }
+
+    private User requireUser(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    /**
+     * Мастер без профиля заказчика при регистрации — создаём профиль заказчика при первой заявке.
+     */
+    private CustomerProfile requireCustomerProfile(User user) {
+        return customerProfileRepository.findByUser(user)
+                .orElseGet(() -> {
+                    CustomerProfile customer = new CustomerProfile();
+                    customer.setUser(user);
+                    String displayName = "Заказчик";
+                    if (user.getWorkerProfile() != null && user.getWorkerProfile().getDisplayName() != null
+                            && !user.getWorkerProfile().getDisplayName().isBlank()) {
+                        displayName = user.getWorkerProfile().getDisplayName();
+                    } else if (user.getEmail() != null && user.getEmail().contains("@")) {
+                        displayName = user.getEmail().substring(0, user.getEmail().indexOf('@'));
+                    }
+                    customer.setDisplayName(UnicodeText.nfkc(displayName));
+                    return customerProfileRepository.save(customer);
+                });
+    }
+
+    private Category resolveCategory(CreateJobRequestDto dto) {
+        if (dto.getCategoryId() != null) {
+            Optional<Category> byId = categoryRepository.findById(dto.getCategoryId());
+            if (byId.isPresent()) {
+                return byId.get();
+            }
+        }
+        String slug = dto.getCategorySlug();
+        if (slug != null && !slug.isBlank()) {
+            String normalized = slug.trim().toLowerCase(Locale.ROOT);
+            Optional<Category> bySlug = categoryRepository.findBySlugIgnoreCase(normalized);
+            if (bySlug.isPresent()) {
+                return bySlug.get();
+            }
+            String fallback = CATALOG_SLUG_FALLBACK.get(normalized);
+            if (fallback != null) {
+                return categoryRepository.findBySlugIgnoreCase(fallback)
+                        .orElseThrow(() -> new RuntimeException("Category not found"));
+            }
+        }
+        throw new RuntimeException("Category not found");
     }
 }

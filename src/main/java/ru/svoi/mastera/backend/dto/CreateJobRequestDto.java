@@ -12,6 +12,8 @@ import java.util.UUID;
 @NoArgsConstructor
 public class CreateJobRequestDto {
     private UUID categoryId;
+    /** Slug из каталога (напр. santehnika), если id с бэка общий для нескольких карточек. */
+    private String categorySlug;
     private String title;
     private String description;
     private String city;

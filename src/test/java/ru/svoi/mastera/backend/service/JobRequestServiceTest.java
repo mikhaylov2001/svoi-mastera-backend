@@ -100,6 +100,44 @@ class JobRequestServiceTest {
     }
 
     @Test
+    void createAutoProvisionsCustomerProfile() {
+        UUID userId = UUID.randomUUID();
+        UUID catId = UUID.randomUUID();
+
+        User user = new User();
+        user.setId(userId);
+        user.setEmail("worker@example.com");
+
+        Category category = new Category();
+        category.setId(catId);
+        category.setSlug("remont-kvartir");
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(customerProfileRepository.findByUser(user)).thenReturn(Optional.empty());
+        when(customerProfileRepository.save(any(CustomerProfile.class))).thenAnswer(invocation -> {
+            CustomerProfile cp = invocation.getArgument(0);
+            cp.setId(UUID.randomUUID());
+            return cp;
+        });
+        when(categoryRepository.findById(catId)).thenReturn(Optional.of(category));
+        when(jobOfferRepository.countByJobRequest_Id(any())).thenReturn(0L);
+        when(jobRequestRepository.save(any(JobRequest.class))).thenAnswer(invocation -> {
+            JobRequest jr = invocation.getArgument(0);
+            jr.setId(UUID.randomUUID());
+            return jr;
+        });
+
+        CreateJobRequestDto dto = new CreateJobRequestDto();
+        dto.setTitle("Заявка");
+        dto.setDescription("Описание");
+        dto.setCategoryId(catId);
+
+        JobRequestDto created = jobRequestService.create(userId, dto);
+        assertThat(created).isNotNull();
+        verify(customerProfileRepository).save(any(CustomerProfile.class));
+    }
+
+    @Test
     void getByIdThrowsWhenNotFound() {
         UUID userId = UUID.randomUUID();
         UUID requestId = UUID.randomUUID();
