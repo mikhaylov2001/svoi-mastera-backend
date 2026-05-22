@@ -14,6 +14,8 @@ public record ListingDto(
         Integer price,
         String priceUnit,
         String category,
+        String city,
+        String addressText,
         String[] photos,
         boolean active,
         Instant createdAt,

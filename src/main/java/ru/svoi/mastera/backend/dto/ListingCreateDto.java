@@ -6,5 +6,7 @@ public record ListingCreateDto(
         Integer price,
         String priceUnit,
         String category,
+        String city,
+        String addressText,
         String[] photos
 ) {}

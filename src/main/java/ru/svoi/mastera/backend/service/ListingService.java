@@ -38,6 +38,8 @@ public class ListingService {
         listing.setPrice(dto.price());
         listing.setPriceUnit(dto.priceUnit());
         listing.setCategory(dto.category());
+        listing.setCity(normalizeLocation(dto.city()));
+        listing.setAddressText(normalizeLocation(dto.addressText()));
         listing.setPhotos(normalizePhotos(dto.photos()));
         listing.setActive(true);
 
@@ -61,6 +63,8 @@ public class ListingService {
         listing.setPrice(dto.price());
         listing.setPriceUnit(dto.priceUnit());
         listing.setCategory(dto.category());
+        listing.setCity(normalizeLocation(dto.city()));
+        listing.setAddressText(normalizeLocation(dto.addressText()));
         listing.setPhotos(normalizePhotos(dto.photos()));
 
         return toDto(listingRepository.save(listing));
@@ -136,6 +140,13 @@ public class ListingService {
                 .toArray(String[]::new);
     }
 
+    private static String normalizeLocation(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return UnicodeText.nfkc(value.trim());
+    }
+
     private ListingDto toDto(Listing l) {
         long pendingDeals = dealRepository.countByListingIdAndStatus(l.getId(), DealStatus.NEW);
         boolean lockedAfterCompletedDeal = listingLockedAfterCompletedDeal(l.getId());
@@ -153,6 +164,8 @@ public class ListingService {
                 l.getPrice(),
                 l.getPriceUnit(),
                 l.getCategory(),
+                l.getCity(),
+                l.getAddressText(),
                 l.getPhotos() != null ? l.getPhotos() : new String[0],
                 l.isActive(),
                 l.getCreatedAt(),

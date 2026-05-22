@@ -32,6 +32,12 @@ public class Listing extends BaseEntity {
     @Column(length = 100)
     private String category;
 
+    @Column(length = 255)
+    private String city;
+
+    @Column(name = "address_text", length = 500)
+    private String addressText;
+
     @Convert(converter = StringArrayJsonTextConverter.class)
     @Column(name = "photos", columnDefinition = "TEXT")
     private String[] photos;
