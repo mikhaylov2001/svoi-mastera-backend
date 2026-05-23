@@ -132,10 +132,19 @@ public class MessageService {
             User partner = m.getSender().getId().equals(userId) ? m.getReceiver() : m.getSender();
             String partnerName = getDisplayName(partner);
 
+            List<Message> allMsgs = messageRepository.findConversation(userId, partnerId);
+
             // Count unread from this partner
-            long unread = messageRepository.findConversation(userId, partnerId).stream()
+            long unread = allMsgs.stream()
                     .filter(msg -> msg.getReceiver().getId().equals(userId) && !msg.isRead())
                     .count();
+
+            // Last time the PARTNER (not us) sent a message — used for online status
+            Instant partnerLastMessageAt = allMsgs.stream()
+                    .filter(msg -> msg.getSender().getId().equals(partnerId))
+                    .map(Message::getCreatedAt)
+                    .max(Instant::compareTo)
+                    .orElse(null);
 
             return new ConversationDto(
                     partnerId,
@@ -143,7 +152,8 @@ public class MessageService {
                     partner.getAvatarUrl(),
                     formatPreview(m.getText()),
                     m.getCreatedAt(),
-                    unread
+                    unread,
+                    partnerLastMessageAt
             );
         }).collect(Collectors.toList());
     }

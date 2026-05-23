@@ -9,5 +9,6 @@ public record ConversationDto(
         String partnerAvatarUrl,
         String lastMessage,
         Instant lastMessageAt,
-        long unreadCount
+        long unreadCount,
+        Instant partnerLastMessageAt
 ) {}
