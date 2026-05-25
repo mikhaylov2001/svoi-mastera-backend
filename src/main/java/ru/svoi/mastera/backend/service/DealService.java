@@ -268,7 +268,7 @@ public class DealService {
             UUID otherUserId = isCustomer ? workerUserId : customerUserId;
             notificationService.notifyDealCancelled(
                     userId, otherUserId, cancellerName,
-                    deal.getJobRequest().getTitle(), isCustomer, r, true);
+                    deal.getJobRequest().getTitle(), isCustomer, r, true, deal.getId());
         } catch (Exception ignored) {}
 
         return toDto(deal);
@@ -328,7 +328,7 @@ public class DealService {
             UUID otherUserId = isCustomer ? workerUserId : customerUserId;
             notificationService.notifyDealCancelled(
                     userId, otherUserId, cancellerName,
-                    deal.getJobRequest().getTitle(), isCustomer, r, false);
+                    deal.getJobRequest().getTitle(), isCustomer, r, false, deal.getId());
         } catch (Exception ignored) {}
 
         return toDto(deal);
@@ -415,7 +415,8 @@ public class DealService {
                         workerUserId,
                         deal.getCustomer().getDisplayName(),
                         deal.getWorker().getDisplayName(),
-                        jobTitle
+                        jobTitle,
+                        deal.getId()
                 );
             } else {
                 UUID targetId = isCustomer ? workerUserId : customerUserId;

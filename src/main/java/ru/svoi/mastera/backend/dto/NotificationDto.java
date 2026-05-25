@@ -1,5 +1,6 @@
 package ru.svoi.mastera.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ public class NotificationDto {
     private String title;
     private String body;
     private String link;
+    @JsonProperty("isRead")
     private boolean isRead;
     private Instant createdAt;
 }

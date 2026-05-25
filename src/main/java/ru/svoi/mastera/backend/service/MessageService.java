@@ -15,6 +15,7 @@ import ru.svoi.mastera.backend.repository.MessageRepository;
 import ru.svoi.mastera.backend.repository.UserRepository;
 import ru.svoi.mastera.backend.util.UnicodeText;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,7 +55,7 @@ public class MessageService {
         // 🔔 Уведомление получателю о новом сообщении
         try {
             String senderName = getDisplayName(sender);
-            notificationService.notifyNewMessage(dto.getReceiverId(), senderName, dto.getText());
+            notificationService.notifyNewMessage(dto.getReceiverId(), senderId, senderName, dto.getText());
         } catch (Exception ignored) {}
 
         return toDto(msg);

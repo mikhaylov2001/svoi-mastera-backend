@@ -65,6 +65,20 @@ public class NotificationService {
 
     // ── Хелперы для создания конкретных уведомлений ──
 
+    private static String dealLink(UUID dealId) {
+        return dealId != null ? "/deals?dealId=" + dealId : "/deals";
+    }
+
+    private static String jobOffersLink(UUID jobRequestId) {
+        return jobRequestId != null
+                ? "/my-requests?request=" + jobRequestId + "&offers=1"
+                : "/my-requests";
+    }
+
+    private static String chatLink(UUID partnerUserId) {
+        return partnerUserId != null ? "/chat/" + partnerUserId : "/chat";
+    }
+
     /** Мастер откликнулся → уведомление заказчику */
     public void notifyNewOffer(UUID customerUserId, String workerName, String jobTitle, UUID jobRequestId) {
         create(
@@ -72,7 +86,7 @@ public class NotificationService {
                 "NEW_OFFER",
                 "Новый отклик на заявку",
                 workerName + " откликнулся на вашу заявку «" + jobTitle + "»",
-                "/deals"
+                jobOffersLink(jobRequestId)
         );
     }
 
@@ -85,7 +99,7 @@ public class NotificationService {
                 "OFFER_ACCEPTED",
                 "Ваш отклик принят! 🎉",
                 fullName + " принял ваш отклик на «" + jobTitle + "». Договорная цена: " + agreedPrice + " ₽. Можно начинать работу!",
-                "/deals"
+                dealLink(dealId)
         );
     }
 
@@ -96,26 +110,26 @@ public class NotificationService {
                 "DEAL_CONFIRMED",
                 "Работа подтверждена",
                 confirmerName + " подтвердил выполнение работы по заявке «" + jobTitle + "». Подтвердите и вы для завершения сделки.",
-                "/deals"
+                dealLink(dealId)
         );
     }
 
     /** Сделка полностью завершена → уведомление обеим сторонам */
     public void notifyDealCompleted(UUID customerUserId, UUID workerUserId,
-                                    String customerName, String workerName, String jobTitle) {
+                                    String customerName, String workerName, String jobTitle, UUID dealId) {
         create(
                 customerUserId,
                 "DEAL_COMPLETED",
                 "Сделка завершена ✅",
                 "Работа по заявке «" + jobTitle + "» успешно завершена. Не забудьте оставить отзыв мастеру " + workerName + "!",
-                "/deals"
+                dealLink(dealId)
         );
         create(
                 workerUserId,
                 "DEAL_COMPLETED",
                 "Сделка завершена ✅",
                 "Работа по заявке «" + jobTitle + "» успешно завершена. Заказчик: " + customerName + ". Отличная работа!",
-                "/deals"
+                dealLink(dealId)
         );
     }
 
@@ -124,7 +138,7 @@ public class NotificationService {
         create(workerUserId, "DEAL_NEW",
                 "Новый заказ! 🔔",
                 customerName + " хочет заказать «" + jobTitle + "». Примите или отклоните заявку.",
-                "/deals");
+                dealLink(dealId));
     }
 
     /** Мастер принял заявку → уведомление заказчику */
@@ -132,7 +146,7 @@ public class NotificationService {
         create(customerUserId, "DEAL_STARTED",
                 "Мастер принял заказ ✅",
                 workerName + " принял ваш заказ «" + jobTitle + "» и готов приступить к работе!",
-                "/deals");
+                dealLink(dealId));
     }
 
     /**
@@ -143,7 +157,7 @@ public class NotificationService {
      */
     public void notifyDealCancelled(UUID cancellerUserId, UUID otherUserId,
                                     String cancellerName, String jobTitle, boolean cancellerIsCustomer,
-                                    String cancellationReason, boolean wasInProgress) {
+                                    String cancellationReason, boolean wasInProgress, UUID dealId) {
         String reason = (cancellationReason == null || cancellationReason.isBlank())
                 ? "не указана"
                 : cancellationReason.trim();
@@ -169,21 +183,21 @@ public class NotificationService {
                 : (role + " " + cancellerName + " отменил(а) заявку по «" + jobTitle
                     + "».\n\nУказанная причина: " + reason + "." + chatHintOther);
 
-        create(cancellerUserId, "DEAL_CANCELLED", titleSelf, bodySelf, "/deals");
+        create(cancellerUserId, "DEAL_CANCELLED", titleSelf, bodySelf, dealLink(dealId));
         // Вторая сторона — сразу в чат, чтобы было проще написать
         create(otherUserId, "DEAL_CANCELLED", titleOther, bodyOther, "/chat");
     }
 
     /** Новое сообщение → уведомление получателю */
-    public void notifyNewMessage(UUID receiverUserId, String senderName, String preview) {
+    public void notifyNewMessage(UUID receiverUserId, UUID senderUserId, String senderName, String preview) {
         String shortPreview = preview != null && preview.length() > 60
                 ? preview.substring(0, 60) + "…" : preview;
         create(
                 receiverUserId,
                 "NEW_MESSAGE",
-                "Новое сообщение от " + senderName,
-                shortPreview != null ? shortPreview : "Вам пришло новое сообщение",
-                "/chat"
+                "Новое сообщение",
+                (senderName != null ? senderName + ": " : "") + (shortPreview != null ? shortPreview : "Вам пришло новое сообщение"),
+                chatLink(senderUserId)
         );
     }
 
