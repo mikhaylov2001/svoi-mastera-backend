@@ -19,7 +19,7 @@ public class FileUploadController {
     private static final String UPLOAD_DIR = "/tmp/chat-files/";
 
     // Базовый URL сервера — замени на свой домен
-    private static final String BASE_URL = "https://svoi-mastera-backend.onrender.com";
+    private static final String BASE_URL = "https://svoi-mastera-backend-n9om.onrender.com";
 
     private static final long MAX_SIZE = 50L * 1024 * 1024; // 50 MB
 
