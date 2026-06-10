@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.svoi.mastera.backend.dto.CreateJobOfferDto;
+import ru.svoi.mastera.backend.dto.DealDto;
 import ru.svoi.mastera.backend.dto.JobOfferDto;
 import ru.svoi.mastera.backend.dto.JobRequestDto;
 import ru.svoi.mastera.backend.entity.JobOffer;
@@ -32,6 +33,7 @@ public class WorkerJobService {
     private final NotificationService notificationService;
     private final JobRequestService jobRequestService;
     private final DealRepository dealRepository;
+    private final DealService dealService;
 
     @Transactional
     public List<JobRequestDto> listOpenJobRequests() {
@@ -86,6 +88,11 @@ public class WorkerJobService {
 
         return toJobOfferDto(offer);
 
+    }
+
+    @Transactional
+    public DealDto takeJobRequest(UUID userId, UUID jobRequestId, CreateJobOfferDto dto) {
+        return dealService.workerTakeJobRequest(userId, jobRequestId, dto);
     }
 
     /**

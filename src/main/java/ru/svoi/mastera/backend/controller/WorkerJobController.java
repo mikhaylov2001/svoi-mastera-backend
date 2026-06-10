@@ -2,6 +2,7 @@ package ru.svoi.mastera.backend.controller;
 
 import org.springframework.web.bind.annotation.*;
 import ru.svoi.mastera.backend.dto.CreateJobOfferDto;
+import ru.svoi.mastera.backend.dto.DealDto;
 import ru.svoi.mastera.backend.dto.JobOfferDto;
 import ru.svoi.mastera.backend.dto.JobRequestDto;
 import ru.svoi.mastera.backend.service.WorkerJobService;
@@ -29,5 +30,13 @@ public class WorkerJobController {
                                    @PathVariable("id") UUID jobRequestId,
                                    @RequestBody CreateJobOfferDto dto) {
         return workerJobService.createOffer(userId, jobRequestId, dto);
+    }
+
+    /** Мастер берёт заявку по указанной цене — сразу создаётся сделка. */
+    @PostMapping("/job-requests/{id}/take")
+    public DealDto takeJobRequest(@RequestHeader("X-User-Id") UUID userId,
+                                  @PathVariable("id") UUID jobRequestId,
+                                  @RequestBody CreateJobOfferDto dto) {
+        return workerJobService.takeJobRequest(userId, jobRequestId, dto);
     }
 }

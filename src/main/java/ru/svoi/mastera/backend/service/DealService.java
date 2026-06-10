@@ -3,6 +3,7 @@ package ru.svoi.mastera.backend.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.svoi.mastera.backend.dto.CreateJobOfferDto;
 import ru.svoi.mastera.backend.dto.DealDto;
 import ru.svoi.mastera.backend.dto.WorkerCompletedWorkDto;
 import ru.svoi.mastera.backend.entity.*;
@@ -86,6 +87,77 @@ public class DealService {
             String jobTitle = jobRequest.getTitle();
             String price = offer.getPrice() != null ? offer.getPrice().toPlainString() : "договорная";
             notificationService.notifyOfferAccepted(workerUserId, customerName, customerLastName, jobTitle, price, deal.getId());
+        } catch (Exception ignored) {}
+
+        return toDto(deal);
+    }
+
+    /**
+     * Мастер берёт открытую заявку по указанной цене — сразу создаётся сделка в работе (без этапа «отклика»).
+     */
+    @Transactional
+    public DealDto workerTakeJobRequest(UUID workerUserId, UUID jobRequestId, CreateJobOfferDto dto) {
+        if (dto == null || dto.getPrice() == null || dto.getPrice().signum() <= 0) {
+            throw new RuntimeException("Укажите цену");
+        }
+
+        User user = userRepository.findById(workerUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        WorkerProfile worker = workerProfileRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Worker profile not found"));
+
+        JobRequest jobRequest = jobRequestRepository.findById(jobRequestId)
+                .orElseThrow(() -> new RuntimeException("Job request not found"));
+
+        if (jobRequest.getStatus() != JobRequestStatus.OPEN) {
+            throw new RuntimeException("Заявка уже не открыта");
+        }
+        if (jobRequest.getSelectedOffer() != null) {
+            throw new RuntimeException("По этой заявке уже выбран исполнитель");
+        }
+        if (dealRepository.existsNonCancelledDealForJobRequest(jobRequest.getId())) {
+            throw new RuntimeException("По этой заявке уже есть активная сделка");
+        }
+        if (jobOfferRepository.existsOpenLikeOfferFromWorker(jobRequest.getId(), worker.getId())) {
+            throw new RuntimeException("Вы уже откликались на эту заявку");
+        }
+
+        jobRequest.setStatus(JobRequestStatus.IN_PROGRESS);
+
+        JobOffer offer = new JobOffer();
+        offer.setJobRequest(jobRequest);
+        offer.setWorker(worker);
+        offer.setMessage(dto.getMessage() != null && !dto.getMessage().isBlank()
+                ? dto.getMessage().trim()
+                : "Готов выполнить работу");
+        offer.setPrice(dto.getPrice());
+        offer.setEstimatedDays(dto.getEstimatedDays());
+        offer.setStatus(JobOfferStatus.ACCEPTED);
+        offer = jobOfferRepository.save(offer);
+
+        jobRequest.setSelectedOffer(offer);
+        jobRequestRepository.save(jobRequest);
+
+        Deal deal = new Deal();
+        deal.setJobRequest(jobRequest);
+        deal.setJobOffer(offer);
+        deal.setCustomer(jobRequest.getCustomer());
+        deal.setWorker(worker);
+        deal.setAgreedPrice(dto.getPrice());
+        deal.setStatus(DealStatus.IN_PROGRESS);
+        deal.setStartedAt(Instant.now());
+        deal.setCustomerConfirmed(false);
+        deal.setWorkerConfirmed(false);
+        deal = dealRepository.save(deal);
+
+        try {
+            UUID customerUserId = jobRequest.getCustomer().getUser().getId();
+            String workerName = worker.getDisplayName();
+            String workerLastName = worker.getLastName();
+            String jobTitle = jobRequest.getTitle();
+            String price = dto.getPrice().toPlainString();
+            notificationService.notifyOfferAccepted(
+                    customerUserId, workerName, workerLastName, jobTitle, price, deal.getId());
         } catch (Exception ignored) {}
 
         return toDto(deal);
