@@ -18,8 +18,11 @@ public class FileUploadController {
     // Та же директория что и у аватаров — /tmp
     private static final String UPLOAD_DIR = "/tmp/chat-files/";
 
-    // Базовый URL сервера — замени на свой домен
-    private static final String BASE_URL = "https://svoi-mastera-backend-n9om.onrender.com";
+    private final String publicBaseUrl;
+
+    public FileUploadController(@Value("${app.public-base-url}") String publicBaseUrl) {
+        this.publicBaseUrl = publicBaseUrl.replaceAll("/$", "");
+    }
 
     private static final long MAX_SIZE = 50L * 1024 * 1024; // 50 MB
 
@@ -94,7 +97,7 @@ public class FileUploadController {
             file.transferTo(dest);
 
             // URL для скачивания
-            String fileUrl = BASE_URL + "/api/v1/files/" + userId + "/" + uniqueName;
+            String fileUrl = publicBaseUrl + "/api/v1/files/" + userId + "/" + uniqueName;
 
             Map<String, Object> response = new HashMap<>();
             response.put("url", fileUrl);
